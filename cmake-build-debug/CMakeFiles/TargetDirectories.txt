@@ -1,3 +1,0 @@
-/home/alberto/Documents/Gits/MicroDronITESM_GUI/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/alberto/Documents/Gits/MicroDronITESM_GUI/cmake-build-debug/CMakeFiles/MicroDronITESM_GUI.dir
-/home/alberto/Documents/Gits/MicroDronITESM_GUI/cmake-build-debug/CMakeFiles/edit_cache.dir

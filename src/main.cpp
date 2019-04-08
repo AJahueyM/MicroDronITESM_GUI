@@ -95,6 +95,6 @@ int main(int argc, char const *argv[])
         window.display();
 
     }
-
+    window.close();
     return 0;
 } 
