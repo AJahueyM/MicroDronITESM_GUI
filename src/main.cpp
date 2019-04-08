@@ -23,15 +23,6 @@ int main(int argc, char const *argv[])
 
 
     while (window.isOpen()) {
-        if(sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
-            if(interface.getMotorOutput1() != 200) {
-                interface.setAllMotorOutput(200);
-            }
-        }else{
-            if(interface.getMotorOutput1() != 0) {
-                interface.setAllMotorOutput(0);
-            }
-        }
 
         sf::Event event;
         while (window.pollEvent(event)) {
