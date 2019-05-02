@@ -15,10 +15,50 @@
 #include <thread>
 #include <chrono>
 
+
+struct SimplePID{
+    float p = 0;
+    float i = 0;
+    float d = 0;
+};
+
+enum class MicroDronInterfaceState{
+    Connecting,
+    Connected
+};
+
+enum class MicroDronInterfaceReadState{
+    Waiting,
+    Reading
+};
+
+enum class MicroDronInterfaceWriteState{
+    Waiting,
+    Writing
+};
+
 class MicroDronInterface {
 public:
     MicroDronInterface(const std::string& ipAddress, short int port);
     ~MicroDronInterface();
+
+    const SimplePID &getPitchPid() const;
+
+    const SimplePID &getRollPid() const;
+
+    const SimplePID &getYawPid() const;
+
+    const SimplePID &getHeightPid() const;
+
+    void setPitchPid(SimplePID pitchPid);
+
+    void setRollPid(SimplePID rollPid);
+
+    void setYawPid(SimplePID yawPid);
+
+    void setHeightPid(SimplePID heightPid);
+
+    void sendHeartBeat();
 
     float getPitch() const;
 
@@ -29,6 +69,8 @@ public:
     float getHeight() const;
 
     int getMode() const;
+
+    float getK() const;
 
     float getMotorOutput1() const;
 
@@ -44,12 +86,21 @@ public:
 
     void setSetpoints(float pitch, float roll, float yaw, float height);
 
+    void setK(float newK);
+
     void emergencyStop();
 
     bool isConnected() const;
 
+    float getHeartbeatTime() const;
+
 private:
     void updateComms();
+
+    void updateRead();
+
+    void updateWrite();
+
     std::thread updateThread;
     bool isRunning = true;
 
@@ -60,11 +111,18 @@ private:
     struct sockaddr_in serv_addr;
     bool connected = false;
 
-    char incomeBuffer[100] = {'\0'};
-    const int maxIncomeBufferSize = 100;
+    char incomeBuffer[200] = {'\0'};
+    const int maxIncomeBufferSize = 200;
 
     int incomeBufferIndex = 0;
     char startChar = 'Y';
+    std::string manualMotorControlTemplate = ",M %f %f %f %f\n";
+    std::string setpointControlTemplate = ",S %f %f %f %f\n";
+    std::string emergencyStopTemplate = ",E\n";
+    std::string pidConfigUpdateTemplate = ",P %c %f %f %f\n";
+    std::string kUpdateTemplate = ",K %f\n";
+    std::string kHeartbeatTemplate = ",L\n";
+
     bool validMessage = false;
 
     float pitch = 0;
@@ -74,6 +132,12 @@ private:
 
     int mode = 0;
     float motorOutput1 = 0, motorOutput2 = 0, motorOutput3 = 0, motorOutput4 = 0;
+    float droneTime = 0.0f;
+
+    float k = 0;
+    SimplePID pitchPid, rollPid, yawPid, heightPid;
+
+    std::chrono::high_resolution_clock::time_point lastTimeUpdate;
 };
 
 

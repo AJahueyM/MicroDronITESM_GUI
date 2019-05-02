@@ -15,7 +15,6 @@ file(GLOB_RECURSE MicroDronGUI_SRC
         )
 find_package(SFML REQUIRED network audio graphics window system)
 
-
 link_libraries(sfml-graphics sfml-window sfml-system pthread GL)
 
 add_executable(MicroDronITESM_GUI ${MicroDronGUI_SRC} src/MicroDron/MicroDronInterface.cpp src/MicroDron/MicroDronInterface.h)

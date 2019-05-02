@@ -2,10 +2,12 @@
 // Created by alberto on 5/04/19.
 //
 
+#include <fcntl.h>
 #include "MicroDronInterface.h"
 
 
 MicroDronInterface::MicroDronInterface(const std::string& ipAddress, short int port) : ipAddress(ipAddress), port(port){
+    printf("Hello\n");
 
     updateThread = std::thread(&MicroDronInterface::updateComms, this);
 }
@@ -13,9 +15,16 @@ MicroDronInterface::MicroDronInterface(const std::string& ipAddress, short int p
 void MicroDronInterface::updateComms() {
     sock = 0;
 
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+    if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) < 0){
         printf("\n Socket creation error \n");
     }
+
+    /* Save the current flags */
+    int flags = fcntl(sock, F_GETFL, 0);
+
+    flags |= O_NONBLOCK;
+    fcntl(sock, F_SETFL, flags);
+
 
     memset(&serv_addr, '0', sizeof(serv_addr));
 
@@ -27,45 +36,58 @@ void MicroDronInterface::updateComms() {
         printf("\nInvalid address/ Address not supported \n");
     }
 
-    connected = connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0;
-    if (connected){
-        printf("\nConnection Failed \n");
-    }
+    printf("Connecting...\n");
 
+    int res = connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));;
+
+    while(res < 0){
+        printf("Connecting...\n");
+        res = connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    printf("Connected\n");
 
     while(isRunning){
 
-        char bufferByte = 0;
+        std::chrono::high_resolution_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
+        double secondsSinceValidMessage = std::chrono::duration<double>(currentTime - lastTimeUpdate).count();
 
+        connected = secondsSinceValidMessage < 0.5;
+
+        char bufferByte = 0;
         ssize_t valread = read( sock , &bufferByte, 1);
 
-        if(!validMessage)
-            validMessage = bufferByte == 'Y';
 
-        if(bufferByte != 'K' && validMessage){
-            if(bufferByte != '\r' && incomeBufferIndex + 1 < maxIncomeBufferSize) {
-                incomeBuffer[incomeBufferIndex++] = bufferByte;
+        if(bufferByte > 0){
+            if(!validMessage)
+                validMessage = bufferByte == 'Y';
+
+            if(bufferByte != 'K' && validMessage){
+                if(incomeBufferIndex + 1 < maxIncomeBufferSize) {
+                    if(bufferByte != '\r' && bufferByte != '\n')
+                        incomeBuffer[incomeBufferIndex++] = bufferByte;
+                }else{
+                    validMessage = false;
+                }
+
             }else{
-                validMessage = false;
+                if(validMessage){
+                    lastTimeUpdate = std::chrono::high_resolution_clock::now();
+                    int ret = sscanf(incomeBuffer, "Y:%f M:%d P:%f R:%f H:%f  M:%f %f %f %f PID: %f Y:%f %f %f P:%f %f %f R:%f %f %f H:%f %f %f %f",
+                                     &yaw,&mode, &pitch, &roll, &height, &motorOutput1, &motorOutput2, &motorOutput3, &motorOutput4,
+                                     &k, &yawPid.p, &yawPid.i, &yawPid.d, &pitchPid.p, &pitchPid.i, &pitchPid.d, &rollPid.p,
+                                     &rollPid.i, &rollPid.d, &heightPid.p, &heightPid.i, &heightPid.d, &droneTime);
+                    validMessage = false;
+                }
+                memset(&incomeBuffer, '\0', sizeof(incomeBuffer));
+                incomeBufferIndex = 0;
             }
 
-        }else{
-            if(validMessage){
-                int ret = sscanf(incomeBuffer, "Y:%f M:%d P:%f R:%f H:%f  M:%f %f %f %f", &yaw,&mode, &pitch, &roll, &height, &motorOutput1, &motorOutput2, &motorOutput3, &motorOutput4);
-                validMessage = false;
-            }
-            memset(&incomeBuffer, '\0', sizeof(incomeBuffer));
-            incomeBufferIndex = 0;
+
         }
 
     }
 
-}
-
-MicroDronInterface::~MicroDronInterface() {
-    isRunning = false;
-    if(updateThread.joinable())
-        updateThread.join();
 }
 
 float MicroDronInterface::getPitch() const {
@@ -86,6 +108,10 @@ float MicroDronInterface::getHeight() const {
 
 int MicroDronInterface::getMode() const {
     return mode;
+}
+
+float MicroDronInterface::getK() const {
+    return k;
 }
 
 float MicroDronInterface::getMotorOutput1() const {
@@ -110,7 +136,7 @@ void MicroDronInterface::setAllMotorOutput(float output) {
     }
 
     char msg[50] = {'\0'};
-    int ret = sprintf(msg, ",M %f %f %f %f", output, output, output, output);
+    int ret = sprintf(msg,  manualMotorControlTemplate.c_str(), output, output, output, output);
 
     send(sock, msg, strlen(msg), 0);
 }
@@ -122,7 +148,7 @@ void MicroDronInterface::setAllMotorOutput(float output1, float output2, float o
     }
 
     char msg[50] = {'\0'};
-    int ret = sprintf(msg, ",M %f %f %f %f", output1, output2, output3, output4);
+    int ret = sprintf(msg, manualMotorControlTemplate.c_str(), output1, output2, output3, output4);
 
     send(sock, msg, strlen(msg), 0);
 }
@@ -137,7 +163,18 @@ void MicroDronInterface::setSetpoints(float pitch, float roll, float yaw, float 
     }
 
     char msg[50] = {'\0'};
-    int ret = sprintf(msg, ",M %f %f %f %f", yaw, pitch, roll, height);
+    int ret = sprintf(msg,  setpointControlTemplate.c_str(), yaw, pitch, roll, height);
+
+    send(sock, msg, strlen(msg), 0);
+}
+
+void MicroDronInterface::setK(float newK) {
+    if(!isConnected()){
+        return;
+    }
+
+    char msg[50] = {'\0'};
+    int ret = sprintf(msg,  kUpdateTemplate.c_str(),newK);
 
     send(sock, msg, strlen(msg), 0);
 }
@@ -147,8 +184,92 @@ void MicroDronInterface::emergencyStop() {
         return;
     }
 
+    send(sock, emergencyStopTemplate.c_str(), strlen(emergencyStopTemplate.c_str()), 0);
+}
+
+const SimplePID &MicroDronInterface::getPitchPid() const {
+    return pitchPid;
+}
+
+const SimplePID &MicroDronInterface::getRollPid() const {
+    return rollPid;
+}
+
+const SimplePID &MicroDronInterface::getYawPid() const {
+    return yawPid;
+}
+
+const SimplePID &MicroDronInterface::getHeightPid() const {
+    return heightPid;
+}
+
+void MicroDronInterface::setPitchPid(SimplePID pitchPid){
+    if(!isConnected()){
+        return;
+    }
+
     char msg[50] = {'\0'};
-    int ret = sprintf(msg, ",K");
+    int ret = sprintf(msg,  pidConfigUpdateTemplate.c_str(), 'P', pitchPid.p, pitchPid.i, pitchPid.d);
 
     send(sock, msg, strlen(msg), 0);
+}
+
+void MicroDronInterface::setRollPid(SimplePID rollPid){
+    if(!isConnected()){
+        return;
+    }
+
+    char msg[50] = {'\0'};
+    int ret = sprintf(msg,  pidConfigUpdateTemplate.c_str(), 'R', rollPid.p, rollPid.i, rollPid.d);
+
+    send(sock, msg, strlen(msg), 0);
+}
+
+void MicroDronInterface::setYawPid(SimplePID yawPid){
+    if(!isConnected()){
+        return;
+    }
+
+    char msg[50] = {'\0'};
+    int ret = sprintf(msg,  pidConfigUpdateTemplate.c_str(), 'Y', yawPid.p, yawPid.i, yawPid.d);
+
+    send(sock, msg, strlen(msg), 0);
+}
+
+void MicroDronInterface::setHeightPid(SimplePID heightPid){
+    if(!isConnected()){
+        return;
+    }
+
+    char msg[50] = {'\0'};
+    int ret = sprintf(msg,  pidConfigUpdateTemplate.c_str(), 'H', heightPid.p, heightPid.i, heightPid.d);
+
+    send(sock, msg, strlen(msg), 0);
+}
+
+void MicroDronInterface::sendHeartBeat(){
+    if(!isConnected()){
+        return;
+    }
+
+    send(sock, kHeartbeatTemplate.c_str(), strlen(kHeartbeatTemplate.c_str()), 0);
+}
+
+void MicroDronInterface::updateRead() {
+
+}
+
+void MicroDronInterface::updateWrite() {
+
+}
+
+MicroDronInterface::~MicroDronInterface() {
+    isRunning = false;
+    close(sock);
+    if(updateThread.joinable())
+        updateThread.join();
+}
+
+float MicroDronInterface::getHeartbeatTime() const {
+    return droneTime;
 }
