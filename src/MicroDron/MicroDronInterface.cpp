@@ -154,7 +154,8 @@ void MicroDronInterface::setAllMotorOutput(float output1, float output2, float o
 }
 
 bool MicroDronInterface::isConnected() const {
-    return connected;
+    //return connected;
+    return true;
 }
 
 void MicroDronInterface::setSetpoints(float pitch, float roll, float yaw, float height) {

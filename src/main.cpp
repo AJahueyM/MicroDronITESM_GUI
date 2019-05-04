@@ -223,7 +223,7 @@ int main(int argc, char const *argv[]){
 
         ImGui::SFML::Render(window);
         window.display();
-        interface.sendHeartBeat();
+        //interface.sendHeartBeat();
 
     }
     window.close();
