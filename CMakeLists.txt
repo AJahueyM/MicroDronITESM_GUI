@@ -13,8 +13,11 @@ file(GLOB_RECURSE MicroDronGUI_SRC
         "src/*.c"
         "src/**/*.c"
         )
-find_package(SFML REQUIRED network audio graphics window system)
 
-link_libraries(sfml-graphics sfml-window sfml-system pthread GL)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-add_executable(MicroDronITESM_GUI ${MicroDronGUI_SRC} src/MicroDron/MicroDronInterface.cpp src/MicroDron/MicroDronInterface.h)
+find_package(SFML 2.4 REQUIRED network audio graphics window system)
+
+link_libraries(${SFML_LIBRARIES} GL pthread opencv_core opencv_objdetect opencv_highgui opencv_features2d opencv_imgproc opencv_imgcodecs opencv_videoio)
+
+add_executable(MicroDronITESM_GUI  src/ProyectoIntegrador/FinalIntegrador/src/ProyectoIntegrador.cpp ${MicroDronGUI_SRC} src/MicroDron/MicroDronInterface.cpp src/MicroDron/MicroDronInterface.h)

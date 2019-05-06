@@ -41,7 +41,7 @@ void MicroDronInterface::updateComms() {
     int res = connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));;
 
     while(res < 0){
-        printf("Connecting...\n");
+        //printf("Connecting...\n");
         res = connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
