@@ -10,7 +10,7 @@
 #include "ProyectoIntegrador/FinalIntegrador/src/ProyectoIntegrador.h"
 
 int main(int argc, char const *argv[]){
-
+    ///Create interface to drone
     MicroDronInterface interface("192.168.4.1", 23);
     sf::RenderWindow window(sf::VideoMode(static_cast<unsigned int>(1200),
                                           static_cast<unsigned int>(650)), "MicroDron GUI", sf::Style::Close);
@@ -26,6 +26,7 @@ int main(int argc, char const *argv[]){
 
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
+    ///Retrive PID from file
     std::ifstream pidFile("pidSave.txt");
     std::string inputLine;
     std::getline(pidFile, inputLine);
@@ -34,10 +35,15 @@ int main(int argc, char const *argv[]){
                 &rollPid.i , &rollPid.d,  &yawPid.p ,&yawPid.i , &yawPid.d );
     pidFile.close();
 
+    ///Update Drone Interface pointer on Vision Program
     setMicroDronInterface(interface);
+
+    //Initialize vision program
     initProyectoIntegrador();
+
     bool lastHKeyValue = false, showHandMask = false;
 
+    ///Setup conversion from cv::Mat to sfml::Sprite
     sf::Image visionOutImage, visionTelemImage;
     sf::Texture visionOutTexture , visionTelemTexture;
     sf::Sprite visionOutSprite , visionTelemSprite;
@@ -58,6 +64,8 @@ int main(int argc, char const *argv[]){
         }
 
         if(window.hasFocus()){
+            ///Update UI and interactions
+
             ImGui::SFML::Update(window, deltaClock.restart());
             ImGui::Begin("Drone State", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
             ImGui::RadioButton(interface.isConnected() ? "Connected" : "Disconnected", interface.isConnected());
@@ -225,12 +233,16 @@ int main(int argc, char const *argv[]){
 
         ImGui::SFML::Render(window);
 
+        ///Not in use right now as Drone cant receive commands too fast due to wiring, once it is fixed this should be
+        /// uncommented
         //interface.sendHeartBeat();
 
+        ///Calibrate vision program
         shouldCalibrateA(sf::Keyboard::isKeyPressed(sf::Keyboard::C));
         shouldCalibrateB(sf::Keyboard::isKeyPressed(sf::Keyboard::B));
         shouldActivate(sf::Keyboard::isKeyPressed(sf::Keyboard::A));
 
+        ///If the camera is opened use vision program
         if(proyectoIntegrador() > 0){
             const Mat& visionOut = getVisionOutput();
             const Mat& visionTelemetry = showHandMask ? getHandMask() : getContours();

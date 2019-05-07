@@ -155,6 +155,11 @@ void MicroDronInterface::setAllMotorOutput(float output1, float output2, float o
 
 bool MicroDronInterface::isConnected() const {
     //return connected;
+
+    /**
+     * The transmision from the drone broke due to wiring, this is a workaround to still be able to control it
+     * effectively disables connection safety functions, should change to return 'connected' once issue is fixed.
+     */
     return true;
 }
 
