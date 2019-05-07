@@ -7,8 +7,6 @@
 
 
 MicroDronInterface::MicroDronInterface(const std::string& ipAddress, short int port) : ipAddress(ipAddress), port(port){
-    printf("Hello\n");
-
     updateThread = std::thread(&MicroDronInterface::updateComms, this);
 }
 
