@@ -36,7 +36,7 @@ int main(int argc, char const *argv[]){
 
     setMicroDronInterface(interface);
     initProyectoIntegrador();
-    bool lastHKeyValue = false, showHandMastk = false;
+    bool lastHKeyValue = false, showHandMask = false;
 
     sf::Image visionOutImage, visionTelemImage;
     sf::Texture visionOutTexture , visionTelemTexture;
@@ -44,9 +44,6 @@ int main(int argc, char const *argv[]){
 
     while (window.isOpen()) {
         std::chrono::high_resolution_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
-        double  timeSeconds = std::chrono::duration<double>(currentTime - startTime).count();
-
-
 
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -234,51 +231,52 @@ int main(int argc, char const *argv[]){
         shouldCalibrateB(sf::Keyboard::isKeyPressed(sf::Keyboard::B));
         shouldActivate(sf::Keyboard::isKeyPressed(sf::Keyboard::A));
 
-        proyectoIntegrador();
-        const Mat& visionOut = getVisionOutput();
-        const Mat& visionTelemetry = showHandMastk ? getHandMask() : getContours();
+        if(proyectoIntegrador() > 0){
+            const Mat& visionOut = getVisionOutput();
+            const Mat& visionTelemetry = showHandMask ? getHandMask() : getContours();
 
-        Mat visionOutRGB, visionTelemRGB;
-        cvtColor(visionOut, visionOutRGB, COLOR_BGR2RGBA);
-        resize(visionOutRGB, visionOutRGB, cv::Size(640 * 0.7,360*0.7));
+            Mat visionOutRGB, visionTelemRGB;
+            cvtColor(visionOut, visionOutRGB, COLOR_BGR2RGBA);
+            resize(visionOutRGB, visionOutRGB, cv::Size(640 * 0.7,360*0.7));
 
-        if(!showHandMastk){
-            cvtColor(visionTelemetry, visionTelemRGB, COLOR_BGR2RGBA);
-        }else{
-            cvtColor(visionTelemetry, visionTelemRGB, COLOR_GRAY2RGBA);
+            if(!showHandMask){
+                cvtColor(visionTelemetry, visionTelemRGB, COLOR_BGR2RGBA);
+            }else{
+                cvtColor(visionTelemetry, visionTelemRGB, COLOR_GRAY2RGBA);
+            }
+
+            resize(visionTelemRGB, visionTelemRGB, cv::Size(640 * 0.7,360*0.7));
+
+            visionOutImage.create(visionOutRGB.cols, visionOutRGB.rows, visionOutRGB.ptr());
+            if (!visionOutTexture.loadFromImage(visionOutImage))
+            {
+                break;
+            }
+
+            visionOutSprite.setTexture(visionOutTexture);
+
+            visionTelemImage.create(visionTelemRGB.cols, visionTelemRGB.rows, visionTelemRGB.ptr());
+            if (!visionTelemTexture.loadFromImage(visionTelemImage))
+            {
+                break;
+            }
+
+            visionTelemSprite.setTexture(visionTelemTexture);
+
+            bool currentHKey = sf::Keyboard::isKeyPressed(sf::Keyboard::H);
+
+            if(currentHKey!= lastHKeyValue  && currentHKey){
+                showHandMask = !showHandMask;
+            }
+
+            visionOutSprite.setPosition(727, 61);
+            visionTelemSprite.setPosition(783, 377);
+
+            window.draw(visionTelemSprite);
+            window.draw(visionOutSprite);
+
+            lastHKeyValue = currentHKey;
         }
-
-        resize(visionTelemRGB, visionTelemRGB, cv::Size(640 * 0.7,360*0.7));
-
-        visionOutImage.create(visionOutRGB.cols, visionOutRGB.rows, visionOutRGB.ptr());
-        if (!visionOutTexture.loadFromImage(visionOutImage))
-        {
-            break;
-        }
-
-        visionOutSprite.setTexture(visionOutTexture);
-
-        visionTelemImage.create(visionTelemRGB.cols, visionTelemRGB.rows, visionTelemRGB.ptr());
-        if (!visionTelemTexture.loadFromImage(visionTelemImage))
-        {
-            break;
-        }
-
-        visionTelemSprite.setTexture(visionTelemTexture);
-
-        bool currentHKey = sf::Keyboard::isKeyPressed(sf::Keyboard::H);
-
-        if(currentHKey!= lastHKeyValue  && currentHKey){
-            showHandMastk = !showHandMastk;
-        }
-
-        visionOutSprite.setPosition(727, 61);
-        visionTelemSprite.setPosition(783, 377);
-
-        window.draw(visionTelemSprite);
-        window.draw(visionOutSprite);
-
-        lastHKeyValue =currentHKey;
 
         window.display();
 

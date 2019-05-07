@@ -40,12 +40,14 @@ void MicroDronInterface::updateComms() {
 
     int res = connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));;
 
-    while(res < 0){
+    while(res < 0 && isRunning){
         //printf("Connecting...\n");
         res = connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-    printf("Connected\n");
+    if(res > 0){
+        printf("Connected\n");
+    }
 
     while(isRunning){
 
@@ -256,12 +258,9 @@ void MicroDronInterface::sendHeartBeat(){
     send(sock, kHeartbeatTemplate.c_str(), strlen(kHeartbeatTemplate.c_str()), 0);
 }
 
-void MicroDronInterface::updateRead() {
 
-}
-
-void MicroDronInterface::updateWrite() {
-
+float MicroDronInterface::getHeartbeatTime() const {
+    return droneTime;
 }
 
 MicroDronInterface::~MicroDronInterface() {
@@ -269,8 +268,4 @@ MicroDronInterface::~MicroDronInterface() {
     close(sock);
     if(updateThread.joinable())
         updateThread.join();
-}
-
-float MicroDronInterface::getHeartbeatTime() const {
-    return droneTime;
 }

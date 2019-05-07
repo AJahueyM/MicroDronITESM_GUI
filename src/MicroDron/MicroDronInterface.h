@@ -22,20 +22,6 @@ struct SimplePID{
     float d = 0;
 };
 
-enum class MicroDronInterfaceState{
-    Connecting,
-    Connected
-};
-
-enum class MicroDronInterfaceReadState{
-    Waiting,
-    Reading
-};
-
-enum class MicroDronInterfaceWriteState{
-    Waiting,
-    Writing
-};
 
 class MicroDronInterface {
 public:
@@ -96,10 +82,6 @@ public:
 
 private:
     void updateComms();
-
-    void updateRead();
-
-    void updateWrite();
 
     std::thread updateThread;
     bool isRunning = true;
