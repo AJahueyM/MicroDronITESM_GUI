@@ -24,6 +24,9 @@ int main(int argc, char const *argv[]){
     float yawSetpoint = 0.0f, pitchSetpoint = 0.0f, rollSetpoint = 0.0f, heightSetpoint = 0.0f, k = 0.0f;
     SimplePID rollPid, pitchPid, yawPid, heightPid;
 
+    float pitchOffset = 15.0f;
+    float rollOffset = 0.0f;
+
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
     ///Retrive PID from file
@@ -117,11 +120,13 @@ int main(int argc, char const *argv[]){
             ImGui::Text("Setpoint Control");
             ImGui::InputFloat("Yaw", &yawSetpoint);
             ImGui::InputFloat("Pitch", &pitchSetpoint);
+            ImGui::InputFloat("Pitch Offset", &pitchOffset);
             ImGui::InputFloat("Roll", &rollSetpoint);
+            ImGui::InputFloat("Roll Offset", &rollOffset);
             ImGui::InputFloat("Height", &heightSetpoint);
 
             if(ImGui::Button("Send Setpoint") || sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-                interface.setSetpoints(pitchSetpoint, rollSetpoint, yawSetpoint, heightSetpoint);
+                interface.setSetpoints(pitchSetpoint + pitchOffset, rollSetpoint + rollOffset, yawSetpoint, heightSetpoint);
             }
             ImGui::End();
 
