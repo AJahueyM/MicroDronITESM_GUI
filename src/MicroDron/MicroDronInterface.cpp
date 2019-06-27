@@ -73,10 +73,10 @@ void MicroDronInterface::updateComms() {
             }else{
                 if(validMessage){
                     lastTimeUpdate = std::chrono::high_resolution_clock::now();
-                    int ret = sscanf(incomeBuffer, "Y:%f M:%d P:%f R:%f H:%f  M:%f %f %f %f PID: %f Y:%f %f %f P:%f %f %f R:%f %f %f H:%f %f %f %f",
+                    int ret = sscanf(incomeBuffer, "Y:%f M:%d P:%f R:%f H:%f  M:%f %f %f %f PID: %f Y:%f %f %f P:%f %f %f R:%f %f %f %f",
                                      &yaw,&mode, &pitch, &roll, &height, &motorOutput1, &motorOutput2, &motorOutput3, &motorOutput4,
                                      &k, &yawPid.p, &yawPid.i, &yawPid.d, &pitchPid.p, &pitchPid.i, &pitchPid.d, &rollPid.p,
-                                     &rollPid.i, &rollPid.d, &heightPid.p, &heightPid.i, &heightPid.d, &droneTime);
+                                     &rollPid.i, &rollPid.d,  &droneTime);
                     validMessage = false;
                 }
                 memset(&incomeBuffer, '\0', sizeof(incomeBuffer));
@@ -154,13 +154,13 @@ void MicroDronInterface::setAllMotorOutput(float output1, float output2, float o
 }
 
 bool MicroDronInterface::isConnected() const {
-    //return connected;
+    return connected;
 
     /**
      * The transmision from the drone broke due to wiring, this is a workaround to still be able to control it.
      * Effectively disables connection safety functions, should change to return 'connected' once issue is fixed.
      */
-    return true;
+    //return true;
 }
 
 void MicroDronInterface::setSetpoints(float pitch, float roll, float yaw, float height) {

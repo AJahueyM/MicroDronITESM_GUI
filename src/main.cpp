@@ -38,11 +38,8 @@ int main(int argc, char const *argv[]){
                 &rollPid.i , &rollPid.d,  &yawPid.p ,&yawPid.i , &yawPid.d );
     pidFile.close();
 
-    ///Update Drone Interface pointer on Vision Program
-    setMicroDronInterface(interface);
 
-    //Initialize vision program
-    initProyectoIntegrador();
+
 
     bool lastHKeyValue = false, showHandMask = false;
 
@@ -238,62 +235,7 @@ int main(int argc, char const *argv[]){
 
         ImGui::SFML::Render(window);
 
-        ///Not in use right now as Drone cant receive commands too fast due to wiring, once it is fixed this should be
-        /// uncommented
-        //interface.sendHeartBeat();
-
-        ///Calibrate vision program
-        shouldCalibrateA(sf::Keyboard::isKeyPressed(sf::Keyboard::C));
-        shouldCalibrateB(sf::Keyboard::isKeyPressed(sf::Keyboard::B));
-        shouldActivate(sf::Keyboard::isKeyPressed(sf::Keyboard::A));
-
-        ///If the camera is opened use vision program
-        if(proyectoIntegrador() > 0){
-            const Mat& visionOut = getVisionOutput();
-            const Mat& visionTelemetry = showHandMask ? getHandMask() : getContours();
-
-            Mat visionOutRGB, visionTelemRGB;
-            cvtColor(visionOut, visionOutRGB, COLOR_BGR2RGBA);
-            resize(visionOutRGB, visionOutRGB, cv::Size(640 * 0.7,360*0.7));
-
-            if(!showHandMask){
-                cvtColor(visionTelemetry, visionTelemRGB, COLOR_BGR2RGBA);
-            }else{
-                cvtColor(visionTelemetry, visionTelemRGB, COLOR_GRAY2RGBA);
-            }
-
-            resize(visionTelemRGB, visionTelemRGB, cv::Size(640 * 0.7,360*0.7));
-
-            visionOutImage.create(visionOutRGB.cols, visionOutRGB.rows, visionOutRGB.ptr());
-            if (!visionOutTexture.loadFromImage(visionOutImage))
-            {
-                break;
-            }
-
-            visionOutSprite.setTexture(visionOutTexture);
-
-            visionTelemImage.create(visionTelemRGB.cols, visionTelemRGB.rows, visionTelemRGB.ptr());
-            if (!visionTelemTexture.loadFromImage(visionTelemImage))
-            {
-                break;
-            }
-
-            visionTelemSprite.setTexture(visionTelemTexture);
-
-            bool currentHKey = sf::Keyboard::isKeyPressed(sf::Keyboard::H);
-
-            if(currentHKey!= lastHKeyValue  && currentHKey){
-                showHandMask = !showHandMask;
-            }
-
-            visionOutSprite.setPosition(727, 61);
-            visionTelemSprite.setPosition(783, 377);
-
-            window.draw(visionTelemSprite);
-            window.draw(visionOutSprite);
-
-            lastHKeyValue = currentHKey;
-        }
+        interface.sendHeartBeat();
 
         window.display();
 
