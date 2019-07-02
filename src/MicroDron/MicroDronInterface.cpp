@@ -209,48 +209,35 @@ const SimplePID &MicroDronInterface::getHeightPid() const {
     return heightPid;
 }
 
-void MicroDronInterface::setPitchPid(SimplePID pitchPid){
+void MicroDronInterface::updatePID(char pidCode, SimplePID pid){
     if(!isConnected()){
         return;
     }
 
-    char msg[50] = {'\0'};
-    int ret = sprintf(msg,  pidConfigUpdateTemplate.c_str(), 'P', pitchPid.p, pitchPid.i, pitchPid.d);
-
+    char msg[150] = {'\0'};
+    int ret = sprintf(msg,  pidConfigUpdateTemplate.c_str(),
+            pidCode, pid.p, pid.i, pid.d, pid.clamped ? 1.0 : -1.0, pid.maxOutput,
+            pid.minOutput, pid.continuous  ? 1.0 : -1.0, pid.maxInput, pid.minInput);
+    printf("%s", msg);
     send(sock, msg, strlen(msg), 0);
+
+}
+void MicroDronInterface::setPitchPid(SimplePID pitchPid){
+    updatePID('P', pitchPid);
 }
 
 void MicroDronInterface::setRollPid(SimplePID rollPid){
-    if(!isConnected()){
-        return;
-    }
+    updatePID('R', rollPid);
 
-    char msg[50] = {'\0'};
-    int ret = sprintf(msg,  pidConfigUpdateTemplate.c_str(), 'R', rollPid.p, rollPid.i, rollPid.d);
-
-    send(sock, msg, strlen(msg), 0);
 }
 
 void MicroDronInterface::setYawPid(SimplePID yawPid){
-    if(!isConnected()){
-        return;
-    }
+    updatePID('Y', yawPid);
 
-    char msg[50] = {'\0'};
-    int ret = sprintf(msg,  pidConfigUpdateTemplate.c_str(), 'Y', yawPid.p, yawPid.i, yawPid.d);
-
-    send(sock, msg, strlen(msg), 0);
 }
 
 void MicroDronInterface::setHeightPid(SimplePID heightPid){
-    if(!isConnected()){
-        return;
-    }
-
-    char msg[50] = {'\0'};
-    int ret = sprintf(msg,  pidConfigUpdateTemplate.c_str(), 'H', heightPid.p, heightPid.i, heightPid.d);
-
-    send(sock, msg, strlen(msg), 0);
+    updatePID('H', heightPid);
 }
 
 void MicroDronInterface::sendHeartBeat(){

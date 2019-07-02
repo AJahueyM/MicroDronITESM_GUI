@@ -20,6 +20,12 @@ struct SimplePID{
     float p = 0;
     float i = 0;
     float d = 0;
+    bool clamped = false;
+    float maxOutput = 0;
+    float minOutput = 0;
+    bool continuous = false;
+    float maxInput = 0;
+    float minInput = 0;
 };
 
 /**
@@ -219,6 +225,8 @@ private:
      */
     void updateComms();
 
+    void updatePID(char pidCode, SimplePID pid);
+
     std::thread updateThread;
     bool isRunning = true;
 
@@ -237,7 +245,7 @@ private:
     std::string manualMotorControlTemplate = ",M %f %f %f %f\n";
     std::string setpointControlTemplate = ",S %f %f %f %f\n";
     std::string emergencyStopTemplate = ",E\n";
-    std::string pidConfigUpdateTemplate = ",P %c %f %f %f\n";
+    std::string pidConfigUpdateTemplate = ",P %c %f %f %f %f %f %f %f %f %f\n";
     std::string kUpdateTemplate = ",K %f\n";
     std::string kHeartbeatTemplate = ",L\n";
 

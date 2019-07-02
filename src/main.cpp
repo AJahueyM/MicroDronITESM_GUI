@@ -39,6 +39,23 @@ int main(int argc, char const *argv[]){
     pidFile.close();
 
 
+    yawPid.clamped = true;
+    yawPid.maxOutput =  0.2;
+    yawPid.minOutput = -0.2;
+    yawPid.continuous = true;
+    yawPid.maxInput =  180;
+    yawPid.minInput = -180;
+
+    rollPid.clamped = false;
+    rollPid.continuous = true;
+    rollPid.maxInput =  180;
+    rollPid.minInput = -180;
+
+    pitchPid.clamped = false;
+    pitchPid.continuous = true;
+    pitchPid.maxInput =  180;
+    pitchPid.minInput = -180;
+
 
 
     bool lastHKeyValue = false, showHandMask = false;
