@@ -57,7 +57,6 @@ void MicroDronInterface::updateComms() {
         char bufferByte = 0;
         ssize_t valread = read( sock , &bufferByte, 1);
 
-
         if(bufferByte > 0){
             if(!validMessage)
                 validMessage = bufferByte == 'Y';

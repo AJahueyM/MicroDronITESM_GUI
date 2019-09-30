@@ -24,8 +24,10 @@ int main(int argc, char const *argv[]){
     float yawSetpoint = 0.0f, pitchSetpoint = 0.0f, rollSetpoint = 0.0f, heightSetpoint = 0.0f, k = 0.0f;
     SimplePID rollPid, pitchPid, yawPid, heightPid;
 
-    float pitchOffset = 15.0f;
+    float pitchOffset = 0.0f;
     float rollOffset = 0.0f;
+    bool flying = false;
+    bool lastE = false;
 
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
@@ -113,6 +115,8 @@ int main(int argc, char const *argv[]){
                 interface.emergencyStop();
             }
 
+
+
             ImGui::Separator();
             ImGui::Text("Manual Control");
             ImGui::InputFloat("Motor1", &motor1Target);
@@ -122,16 +126,16 @@ int main(int argc, char const *argv[]){
             if(ImGui::Button("Send Manual")){
                 interface.setAllMotorOutput(motor1Target, motor2Target, motor3Target, motor4Target);
             }
+//            interface.setAllMotorOutput(motor1Target, motor2Target, motor3Target, motor4Target);
 
             ImGui::InputFloat("All Motor Target", &allMotorTarget);
             if(ImGui::Button("Send All Manual")){
                 interface.setAllMotorOutput(allMotorTarget);
-
-
             }
 
             ImGui::Separator();
             ImGui::Text("Setpoint Control");
+            ImGui::RadioButton("Flying", flying);
             ImGui::InputFloat("Yaw", &yawSetpoint);
             ImGui::InputFloat("Pitch", &pitchSetpoint);
             ImGui::InputFloat("Pitch Offset", &pitchOffset);
@@ -139,9 +143,40 @@ int main(int argc, char const *argv[]){
             ImGui::InputFloat("Roll Offset", &rollOffset);
             ImGui::InputFloat("Height", &heightSetpoint);
 
-            if(ImGui::Button("Send Setpoint") || sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-                interface.setSetpoints(pitchSetpoint + pitchOffset, rollSetpoint + rollOffset, yawSetpoint, heightSetpoint);
+            if(ImGui::Button("Send Setpoint")) {
+                if(flying){
+                    interface.setSetpoints(pitchSetpoint + pitchOffset, rollSetpoint + rollOffset, yawSetpoint, heightSetpoint);
+                }
             }
+
+            if(lastE != sf::Keyboard::isKeyPressed(sf::Keyboard::E) && sf::Keyboard::isKeyPressed(sf::Keyboard::E)){
+                flying = !flying;
+            }
+            lastE = sf::Keyboard::isKeyPressed(sf::Keyboard::E);
+
+            if(flying){
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::S)){
+                    interface.setSetpoints(10 + pitchOffset, 0 + rollOffset, 0, -0.2);
+                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
+                    interface.setSetpoints(-10 + pitchOffset, 0 + rollOffset, 0, -0.2);
+                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::D)){
+                    interface.setSetpoints(0 + pitchOffset, -15 + rollOffset, 0, -0.2);
+                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
+                    interface.setSetpoints(0 + pitchOffset, 15 + rollOffset, 0, -0.2);
+                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::F)){
+                    interface.setSetpoints(0 + pitchOffset, 0 + rollOffset, 0, -0.2);
+                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+                    interface.setSetpoints(0 + pitchOffset, 0 + rollOffset, 0, 0.0);
+                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space)){
+                    interface.emergencyStop();
+                    flying = false;
+                }else{
+                    interface.setSetpoints(0 + pitchOffset, 0 + rollOffset, 0, -0.2);
+                }
+            }
+
+
+
             ImGui::End();
 
             ImGui::Begin("PID Setup", nullptr,ImGuiWindowFlags_AlwaysAutoResize);
