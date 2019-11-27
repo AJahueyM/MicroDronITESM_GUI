@@ -154,28 +154,6 @@ int main(int argc, char const *argv[]){
             }
             lastE = sf::Keyboard::isKeyPressed(sf::Keyboard::E);
 
-            if(flying){
-                if(sf::Keyboard::isKeyPressed(sf::Keyboard::S)){
-                    interface.setSetpoints(10 + pitchOffset, 0 + rollOffset, 0, -0.2);
-                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
-                    interface.setSetpoints(-10 + pitchOffset, 0 + rollOffset, 0, -0.2);
-                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::D)){
-                    interface.setSetpoints(0 + pitchOffset, -15 + rollOffset, 0, -0.2);
-                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
-                    interface.setSetpoints(0 + pitchOffset, 15 + rollOffset, 0, -0.2);
-                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::F)){
-                    interface.setSetpoints(0 + pitchOffset, 0 + rollOffset, 0, -0.2);
-                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-                    interface.setSetpoints(0 + pitchOffset, 0 + rollOffset, 0, 0.0);
-                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space)){
-                    interface.emergencyStop();
-                    flying = false;
-                }else{
-                    interface.setSetpoints(0 + pitchOffset, 0 + rollOffset, 0, -0.2);
-                }
-            }
-
-
 
             ImGui::End();
 
