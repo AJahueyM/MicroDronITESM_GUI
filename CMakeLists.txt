@@ -18,6 +18,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 find_package(SFML 2.4 REQUIRED network audio graphics window system)
 
-link_libraries(${SFML_LIBRARIES} GL pthread opencv_core opencv_objdetect opencv_highgui opencv_features2d opencv_imgproc opencv_imgcodecs opencv_videoio)
+link_libraries(${SFML_LIBRARIES} GL pthread)
 
-add_executable(MicroDronITESM_GUI  src/ProyectoIntegrador/FinalIntegrador/src/ProyectoIntegrador.cpp ${MicroDronGUI_SRC} src/MicroDron/MicroDronInterface.cpp src/MicroDron/MicroDronInterface.h)
+add_executable(MicroDronITESM_GUI  ${MicroDronGUI_SRC} src/MicroDron/MicroDronInterface.cpp src/MicroDron/MicroDronInterface.h)

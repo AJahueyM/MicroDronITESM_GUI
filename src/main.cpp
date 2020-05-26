@@ -7,7 +7,6 @@
 #include "imgui/PlotVar.h"
 #include <chrono>
 #include <fstream>
-#include "ProyectoIntegrador/FinalIntegrador/src/ProyectoIntegrador.h"
 
 int main(int argc, char const *argv[]){
     ///Create interface to drone
@@ -105,7 +104,6 @@ int main(int argc, char const *argv[]){
             if(sf::Keyboard::isKeyPressed(sf::Keyboard::F)){
                 interface.emergencyStop();
             }
-            shouldStop(sf::Keyboard::isKeyPressed(sf::Keyboard::F));
 
             ImGui::Text("Current mode %i", interface.getMode());
             ImGui::End();
@@ -271,7 +269,6 @@ int main(int argc, char const *argv[]){
 
 
     }
-    stopProyectoIntegrador();
     window.close();
     return 0;
 } 
