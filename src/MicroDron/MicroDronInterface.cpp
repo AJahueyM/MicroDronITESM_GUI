@@ -16,6 +16,8 @@ void MicroDronInterface::updateComms() {
     connectionState = ConectionState::SettingUp;
 
     while(isRunning){
+        connected = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - lastTimeUpdate).count() < 1.5;
+
         switch(connectionState){
             case ConectionState::SettingUp:{
                 sock = 0;
@@ -72,7 +74,6 @@ void MicroDronInterface::updateComms() {
                 }
 
                 update(buffer);
-                connected = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - lastTimeUpdate).count() < 1.5;
                 std::this_thread::sleep_for(std::chrono::milliseconds(25));
                 break;
             }
@@ -103,7 +104,19 @@ void MicroDronInterface::update(const char buffer[BUFFER_SIZE]) {
             lastTimeUpdate = std::chrono::high_resolution_clock::now();
         }
     }
+    std::lock_guard<std::mutex> lock(commandMutex);
 
+    if(heartbeatReset){
+        int res = write(sock, kHeartbeatTemplate.c_str(), strlen(kHeartbeatTemplate.c_str()));
+        if(res < 0){
+            std::cerr << "An error occurred while sending a message... Error id: " << errno << " " << strerror(errno) << "\n";
+        }
+        heartbeatReset = false;
+    }
+    if(needToSendCommand){
+        write(sock, commandToSend.c_str(), strlen(commandToSend.c_str()));
+        needToSendCommand = false;
+    }
 }
 
 float MicroDronInterface::getPitch() const{
@@ -147,12 +160,22 @@ float MicroDronInterface::getMotorOutput4() const {
 }
 
 void MicroDronInterface::setAllMotorOutput(float output) {
+    std::lock_guard<std::mutex> lock(commandMutex);
+    char msg[50] = {'\0'};
+    int ret = sprintf(msg,  manualMotorControlTemplate.c_str(), output, output, output, output);
 
+    commandToSend = std::string(msg);
+    needToSendCommand = true;
 }
 
 
 void MicroDronInterface::setAllMotorOutput(float output1, float output2, float output3, float output4) {
+    std::lock_guard<std::mutex> lock(commandMutex);
+    char msg[50] = {'\0'};
+    int ret = sprintf(msg, manualMotorControlTemplate.c_str(), output1, output2, output3, output4);
 
+    commandToSend = std::string(msg);
+    needToSendCommand = true;
 }
 
 bool MicroDronInterface::isConnected() const {
@@ -160,15 +183,28 @@ bool MicroDronInterface::isConnected() const {
 }
 
 void MicroDronInterface::setSetpoints(float pitch, float roll, float yaw, float height) {
+    std::lock_guard<std::mutex> lock(commandMutex);
 
+    char msg[50] = {'\0'};
+    int ret = sprintf(msg,  setpointControlTemplate.c_str(), yaw, pitch, roll, height);
+
+    commandToSend = std::string(msg);
+    needToSendCommand = true;
 }
 
 void MicroDronInterface::setK(float newK) {
+    std::lock_guard<std::mutex> lock(commandMutex);
 
+    char msg[50] = {'\0'};
+    sprintf(msg,  kUpdateTemplate.c_str(),newK);
+    commandToSend = std::string(msg);
+    needToSendCommand = true;
 }
 
 void MicroDronInterface::emergencyStop() {
-
+    std::lock_guard<std::mutex> lock(commandMutex);
+    commandToSend = emergencyStopTemplate;
+    needToSendCommand = true;
 }
 
 const SimplePID &MicroDronInterface::getPitchPid() const {
@@ -188,25 +224,42 @@ const SimplePID &MicroDronInterface::getHeightPid() const {
 }
 
 void MicroDronInterface::updatePID(char pidCode, SimplePID pid){
+    std::lock_guard<std::mutex> lock(commandMutex);
 
+    char msg[150] = {'\0'};
+    sprintf(msg,  pidConfigUpdateTemplate.c_str(),
+                      pidCode, pid.p, pid.i, pid.d, pid.clamped ? 1.0 : -1.0, pid.maxOutput,
+                      pid.minOutput, pid.continuous  ? 1.0 : -1.0, pid.maxInput, pid.minInput);
+    commandToSend = std::string(msg);
+    needToSendCommand = true;
 
 }
 void MicroDronInterface::setPitchPid(SimplePID pitchPid){
+    std::lock_guard<std::mutex> lock(commandMutex);
+    updatePID('P', pitchPid);
 }
 
 void MicroDronInterface::setRollPid(SimplePID rollPid){
+    std::lock_guard<std::mutex> lock(commandMutex);
+    updatePID('R', rollPid);
 
 }
 
 void MicroDronInterface::setYawPid(SimplePID yawPid){
+    std::lock_guard<std::mutex> lock(commandMutex);
+    updatePID('Y', yawPid);
 
 }
 
 void MicroDronInterface::setHeightPid(SimplePID heightPid){
+    std::lock_guard<std::mutex> lock(commandMutex);
+    updatePID('H', heightPid);
+
 }
 
 void MicroDronInterface::sendHeartBeat(){
-
+    std::lock_guard<std::mutex> lock(commandMutex);
+    heartbeatReset = true;
 }
 
 

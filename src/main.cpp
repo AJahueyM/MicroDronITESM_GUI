@@ -11,13 +11,21 @@
 int main(int argc, char const *argv[]){
     ///Create interface to drone
     //MicroDronInterface interface("192.168.4.1", 23);
-    MicroDronInterface interface("127.0.0.1", 51718);
+    MicroDronInterface interface("127.0.0.1", 51717);
     sf::RenderWindow window(sf::VideoMode(static_cast<unsigned int>(1200),
                                           static_cast<unsigned int>(650)), "MicroDron GUI", sf::Style::Close);
     window.setFramerateLimit(60);
 
     ImGui::CreateContext();
     ImGui::SFML::Init(window);
+
+#ifdef __APPLE__
+    /***
+     * This need to be done so that the program runs on MacOS
+     */
+    ImGui::NewFrame();
+#endif
+
     sf::Clock deltaClock;
 
     float motor1Target = 0.0f, motor2Target = 0.0f, motor3Target = 0.0f, motor4Target = 0.0f, allMotorTarget = 0.0f;
@@ -57,15 +65,6 @@ int main(int argc, char const *argv[]){
     pitchPid.continuous = true;
     pitchPid.maxInput =  180;
     pitchPid.minInput = -180;
-
-
-
-    bool lastHKeyValue = false, showHandMask = false;
-
-    ///Setup conversion from cv::Mat to sfml::Sprite
-    sf::Image visionOutImage, visionTelemImage;
-    sf::Texture visionOutTexture , visionTelemTexture;
-    sf::Sprite visionOutSprite , visionTelemSprite;
 
     while (window.isOpen()) {
         std::chrono::high_resolution_clock::time_point currentTime = std::chrono::high_resolution_clock::now();

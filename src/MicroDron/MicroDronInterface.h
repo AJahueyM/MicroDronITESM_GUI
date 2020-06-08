@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <thread>
 #include <chrono>
+#include <mutex>
 
 
 struct SimplePID{
@@ -249,15 +250,12 @@ private:
     struct sockaddr_in serv_addr{};
     bool connected = false;
 
-    char startChar = 'Y';
     std::string manualMotorControlTemplate = ",M %f %f %f %f\n";
     std::string setpointControlTemplate = ",S %f %f %f %f\n";
     std::string emergencyStopTemplate = ",E\n";
     std::string pidConfigUpdateTemplate = ",P %c %f %f %f %f %f %f %f %f %f\n";
     std::string kUpdateTemplate = ",K %f\n";
     std::string kHeartbeatTemplate = ",L\n";
-
-    bool validMessage = false;
 
     float pitch = 0;
     float roll = 0;
@@ -274,6 +272,11 @@ private:
     std::chrono::high_resolution_clock::time_point lastTimeUpdate;
     ConectionState connectionState;
     std::string lastMessage;
+
+    bool heartbeatReset = false;
+    std::string commandToSend;
+    std::mutex commandMutex;
+    bool needToSendCommand = false;
 };
 
 
