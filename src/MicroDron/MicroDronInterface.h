@@ -34,6 +34,14 @@ struct SimplePID{
  *
  * By: Alberto Jahuey Moncada   A01039835@itesm.mx
  */
+
+enum class ConectionState{
+    SettingUp,
+    Connecting,
+    Connected
+};
+
+
 class MicroDronInterface {
 public:
     /**
@@ -42,7 +50,7 @@ public:
      * @param ipAddress
      * @param port
      */
-    MicroDronInterface(const std::string& ipAddress, short int port);
+    MicroDronInterface(std::string  ipAddress, int port);
 
     /**
      * Stops update thread
@@ -219,11 +227,15 @@ public:
     float getHeartbeatTime() const;
 
 private:
+
+    static const short int BUFFER_SIZE = 200;
     /**
      * Update comms thread, reads the incoming buffer. It waits for the start of the message and its end, then
      * parses it and updates the current known status of the drone.
      */
     void updateComms();
+
+    void update(const char buffer[BUFFER_SIZE]);
 
     void updatePID(char pidCode, SimplePID pid);
 
@@ -231,16 +243,12 @@ private:
     bool isRunning = true;
 
     std::string ipAddress;
-    short int port;
-    int sock;
-    struct sockaddr_in address;
-    struct sockaddr_in serv_addr;
+    int port;
+    int sock{};
+    struct sockaddr_in address{};
+    struct sockaddr_in serv_addr{};
     bool connected = false;
 
-    char incomeBuffer[200] = {'\0'};
-    const int maxIncomeBufferSize = 200;
-
-    int incomeBufferIndex = 0;
     char startChar = 'Y';
     std::string manualMotorControlTemplate = ",M %f %f %f %f\n";
     std::string setpointControlTemplate = ",S %f %f %f %f\n";
@@ -264,6 +272,8 @@ private:
     SimplePID pitchPid, rollPid, yawPid, heightPid;
 
     std::chrono::high_resolution_clock::time_point lastTimeUpdate;
+    ConectionState connectionState;
+    std::string lastMessage;
 };
 
 
