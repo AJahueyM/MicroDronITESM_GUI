@@ -235,24 +235,20 @@ void MicroDronInterface::updatePID(char pidCode, SimplePID pid){
 
 }
 void MicroDronInterface::setPitchPid(SimplePID pitchPid){
-    std::lock_guard<std::mutex> lock(commandMutex);
     updatePID('P', pitchPid);
 }
 
 void MicroDronInterface::setRollPid(SimplePID rollPid){
-    std::lock_guard<std::mutex> lock(commandMutex);
     updatePID('R', rollPid);
 
 }
 
 void MicroDronInterface::setYawPid(SimplePID yawPid){
-    std::lock_guard<std::mutex> lock(commandMutex);
     updatePID('Y', yawPid);
 
 }
 
 void MicroDronInterface::setHeightPid(SimplePID heightPid){
-    std::lock_guard<std::mutex> lock(commandMutex);
     updatePID('H', heightPid);
 
 }
