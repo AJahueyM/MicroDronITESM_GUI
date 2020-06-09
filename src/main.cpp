@@ -12,7 +12,7 @@ int main(int argc, char const *argv[]){
     ///Create interface to drone
 
     //MicroDronInterface interface("192.168.4.1", 23);
-    MicroDronInterface interface("127.0.0.1", 51718);
+    MicroDronInterface interface("127.0.0.1", 51717);
     sf::RenderWindow window(sf::VideoMode(static_cast<unsigned int>(1200),
                                           static_cast<unsigned int>(650)), "MicroDron GUI", sf::Style::Close);
     window.setFramerateLimit(60);

@@ -74,10 +74,10 @@ void MicroDronInterface::updateComms() {
                 }
 
                 update(buffer);
-                std::this_thread::sleep_for(std::chrono::milliseconds(25));
                 break;
             }
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
     }
 }
 
@@ -105,7 +105,6 @@ void MicroDronInterface::update(const char buffer[BUFFER_SIZE]) {
         }
     }
     std::lock_guard<std::mutex> lock(commandMutex);
-
     if(heartbeatReset){
         int res = write(sock, kHeartbeatTemplate.c_str(), strlen(kHeartbeatTemplate.c_str()));
         if(res < 0){
@@ -144,7 +143,7 @@ float MicroDronInterface::getK() const {
 }
 
 float MicroDronInterface::getMotorOutput1() const {
-    return motorOutput1;
+return motorOutput1;
 }
 
 float MicroDronInterface::getMotorOutput2() const {
