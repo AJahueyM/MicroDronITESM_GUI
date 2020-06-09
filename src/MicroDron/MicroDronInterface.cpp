@@ -6,6 +6,7 @@
 #include "MicroDronInterface.h"
 #include <iostream>
 #include <utility>
+#include <algorithm>
 
 MicroDronInterface::MicroDronInterface(std::string  ipAddress, int port) : ipAddress(std::move(ipAddress)), port(port){
     updateThread = std::thread(&MicroDronInterface::updateComms, this);
@@ -82,11 +83,14 @@ void MicroDronInterface::updateComms() {
 }
 
 void MicroDronInterface::update(const char buffer[BUFFER_SIZE]) {
-    std::string received = lastMessage + std::string(buffer);
+    std::string stringBuffer = std::string(buffer);
+    stringBuffer.erase(std::remove(stringBuffer.begin(), stringBuffer.end(), '\n'), stringBuffer.end());
+    std::string received = lastMessage + stringBuffer;
     int messageStart = received.find('Y');
     int messageEnd = received.find('K');
+
     std::cout << "-------------------------------------------\n";
-    std::cout << std::string(buffer) << "\n";
+    std::cout << stringBuffer << "\n";
 
     if((messageStart != std::string::npos && messageEnd != std::string::npos) && (messageEnd > messageStart)){
         if(messageEnd + 1 < received.length()){
