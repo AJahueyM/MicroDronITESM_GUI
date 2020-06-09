@@ -85,7 +85,7 @@ void MicroDronInterface::update(const char buffer[BUFFER_SIZE]) {
     std::string received = lastMessage + std::string(buffer);
     int messageStart = received.find('Y');
     int messageEnd = received.find('K');
-    std::cout << "-------------------------------------------\n";
+    std::cout <<"-------------------------------------------\n";
     std::cout << std::string(buffer) << "\n";
 
     if((messageStart != std::string::npos && messageEnd != std::string::npos) && (messageEnd > messageStart)){
