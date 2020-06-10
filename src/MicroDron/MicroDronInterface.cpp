@@ -85,9 +85,11 @@ void MicroDronInterface::updateComms() {
 void MicroDronInterface::update(const char buffer[BUFFER_SIZE]) {
     std::string stringBuffer = std::string(buffer);
     stringBuffer.erase(std::remove(stringBuffer.begin(), stringBuffer.end(), '\n'), stringBuffer.end());
+
      stringBuffer.erase(std::remove(stringBuffer.begin(), stringBuffer.end(), '\333'), stringBuffer.end());
         stringBuffer.erase(std::remove(stringBuffer.begin(), stringBuffer.end(), '\363'), stringBuffer.end());
     stringBuffer.erase(std::remove(stringBuffer.begin(), stringBuffer.end(), '\r'), stringBuffer.end());
+
     std::string received = lastMessage + stringBuffer;
    int messageStart = stringBuffer.find('Y');
     int messageEnd = stringBuffer.find('K');
