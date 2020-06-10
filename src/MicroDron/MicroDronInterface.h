@@ -229,7 +229,7 @@ public:
 
 private:
 
-    static const short int BUFFER_SIZE = 300;
+    static const short int BUFFER_SIZE = 200;
     /**
      * Update comms thread, reads the incoming buffer. It waits for the start of the message and its end, then
      * parses it and updates the current known status of the drone.

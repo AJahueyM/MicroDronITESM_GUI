@@ -6,6 +6,7 @@
 #include "MicroDronInterface.h"
 #include <iostream>
 #include <utility>
+#include <algorithm>
 
 MicroDronInterface::MicroDronInterface(std::string  ipAddress, int port) : ipAddress(std::move(ipAddress)), port(port){
     updateThread = std::thread(&MicroDronInterface::updateComms, this);
@@ -77,25 +78,35 @@ void MicroDronInterface::updateComms() {
                 break;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 }
 
 void MicroDronInterface::update(const char buffer[BUFFER_SIZE]) {
-    std::string received = lastMessage + std::string(buffer);
-    int messageStart = received.find('Y');
-    int messageEnd = received.find('K');
-    std::cout <<"-------------------------------------------\n";
-    std::cout << std::string(buffer) << "\n";
+    std::string stringBuffer = std::string(buffer);
+    stringBuffer.erase(std::remove(stringBuffer.begin(), stringBuffer.end(), '\n'), stringBuffer.end());
+     stringBuffer.erase(std::remove(stringBuffer.begin(), stringBuffer.end(), '\333'), stringBuffer.end());
+        stringBuffer.erase(std::remove(stringBuffer.begin(), stringBuffer.end(), '\363'), stringBuffer.end());
+    stringBuffer.erase(std::remove(stringBuffer.begin(), stringBuffer.end(), '\r'), stringBuffer.end());
+    std::string received = lastMessage + stringBuffer;
+   int messageStart = stringBuffer.find('Y');
+    int messageEnd = stringBuffer.find('K');
 
+
+    //std::cout << "-------------------------------------------\n";
+   // std::cout <<received<< "\n";
+  //  std::cout << "********************************************\n";
+    //std::cout <<stringBuffer.substr(messageEnd+1, stringBuffer.length() - 1)<< "\n";
     if((messageStart != std::string::npos && messageEnd != std::string::npos) && (messageEnd > messageStart)){
-        if(messageEnd + 1 < received.length()){
-            lastMessage = received.substr(messageEnd + 1);
+        if(messageEnd + 1 < stringBuffer.length()){
+            lastMessage = stringBuffer.substr(messageEnd + 1, stringBuffer.length() - 1);
         }else{
             lastMessage = "";
         }
 
-        std::string message = received.substr(messageStart, messageEnd);
+       std::string message = received.substr(received.find('Y'), received.find('K'));
+       std::cout << "////////////////////////////////////////\n";
+       std::cout <<message<< "\n";
 
         int ret = sscanf(message.c_str(), "Y:%f M:%d P:%f R:%f H:%f  M:%f %f %f %f PID: %f Y:%f %f %f P:%f %f %f R:%f %f %f %f",
                          &yaw,&mode, &pitch, &roll, &height, &motorOutput1, &motorOutput2, &motorOutput3, &motorOutput4,
@@ -106,7 +117,7 @@ void MicroDronInterface::update(const char buffer[BUFFER_SIZE]) {
             lastTimeUpdate = std::chrono::high_resolution_clock::now();
         }
     }
-    std::lock_guard<std::mutex> lock(commandMutex);
+    //std::lock_guard<std::mutex> lock(commandMutex);
     if(heartbeatReset){
         int res = write(sock, kHeartbeatTemplate.c_str(), strlen(kHeartbeatTemplate.c_str()));
         if(res < 0){
