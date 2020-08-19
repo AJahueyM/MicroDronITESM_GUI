@@ -260,7 +260,7 @@ int main(int argc, char const *argv[]){
             ImGui::End();
         }
 
-        window.clear();
+        window.clear(sf::Color(94,94,94));
 
         ImGui::SFML::Render(window);
 
