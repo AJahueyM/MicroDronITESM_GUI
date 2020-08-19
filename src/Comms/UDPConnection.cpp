@@ -7,7 +7,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <fcntl.h>
-#include <libnet.h>
+#include <arpa/inet.h>
 
 UDPConnection::UDPConnection(const std::string &droneIp, uint16_t sendPort, uint16_t recvPort) {
     this->droneIp = droneIp;
