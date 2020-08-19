@@ -19,25 +19,25 @@ public:
      * Retrieves last valid Pitch PID read from drone
      * @return
      */
-    virtual const SimplePID &getPitchPid() const = 0;
+    virtual SimplePID getPitchPid() const = 0;
 
     /**
     * Retrieves last valid Roll PID read from drone
     * @return
     */
-    virtual const SimplePID &getRollPid() const = 0;
+    virtual SimplePID getRollPid() const = 0;
 
     /**
     * Retrieves last valid Yaw PID read from drone
     * @return
     */
-    virtual const SimplePID &getYawPid() const = 0;
+    virtual SimplePID getYawPid() const = 0;
 
     /**
     * Retrieves last valid Height PID read from drone
     * @return
     */
-    virtual const SimplePID &getHeightPid() const = 0;
+    virtual SimplePID getHeightPid() const = 0;
 
     /**
     * Attempts to send a new pitch PID to drone

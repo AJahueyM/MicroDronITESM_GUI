@@ -221,19 +221,19 @@ void MicroDronInterfaceOLD::emergencyStop() {
     needToSendCommand = true;
 }
 
-const SimplePID &MicroDronInterfaceOLD::getPitchPid() const {
+SimplePID MicroDronInterfaceOLD::getPitchPid() const {
     return pitchPid;
 }
 
-const SimplePID &MicroDronInterfaceOLD::getRollPid() const {
+SimplePID MicroDronInterfaceOLD::getRollPid() const {
     return rollPid;
 }
 
-const SimplePID &MicroDronInterfaceOLD::getYawPid() const {
+SimplePID MicroDronInterfaceOLD::getYawPid() const {
     return yawPid;
 }
 
-const SimplePID &MicroDronInterfaceOLD::getHeightPid() const {
+SimplePID MicroDronInterfaceOLD::getHeightPid() const {
     return heightPid;
 }
 

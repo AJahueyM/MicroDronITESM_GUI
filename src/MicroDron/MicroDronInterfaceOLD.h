@@ -45,25 +45,25 @@ public:
      * Retrieves last valid Pitch PID read from drone
      * @return
      */
-    const SimplePID &getPitchPid() const override;
+    SimplePID getPitchPid() const override;
 
     /**
     * Retrieves last valid Roll PID read from drone
     * @return
     */
-    const SimplePID &getRollPid() const override;
+    SimplePID getRollPid() const override;
 
     /**
     * Retrieves last valid Yaw PID read from drone
     * @return
     */
-    const SimplePID &getYawPid() const override;
+    SimplePID getYawPid() const override;
 
     /**
     * Retrieves last valid Height PID read from drone
     * @return
     */
-    const SimplePID &getHeightPid() const override;
+    SimplePID getHeightPid() const override;
 
     /**
     * Attempts to send a new pitch PID to drone
