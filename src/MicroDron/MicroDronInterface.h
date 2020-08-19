@@ -171,6 +171,8 @@ public:
      */
     virtual void emergencyStop() = 0;
 
+    virtual bool isEmergencyStopped() const = 0;
+
     /**
      * Report whether a valid message has been read from the drone recently
      * @return

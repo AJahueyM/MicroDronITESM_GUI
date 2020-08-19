@@ -7,14 +7,37 @@
 #include "imgui/PlotVar.h"
 #include <chrono>
 #include <fstream>
+#include <functional>
+
+void createPIDConfigMenu(const std::string &name, SimplePID &pid, const std::function<void(const SimplePID &pid)> &setFun, int id){
+    ImGui::Text("%s", name.c_str());
+    ImGui::PushID(id);
+    //ImGui::SameLine();
+    ImGui::InputFloat("P", &pid.p, 0.1f, 0.0f, "%.5f");
+    //ImGui::SameLine();
+    ImGui::InputFloat("I", &pid.i, 0.1f, 0.0f, "%.5f");
+    //ImGui::SameLine();
+    ImGui::InputFloat("D", &pid.d, 0.1f, 0.0f, "%.5f");
+    // ImGui::SameLine();
+    if(ImGui::Button("Send")){
+        setFun(pid);
+    }
+    ImGui::Separator();
+
+    ImGui::PopID();
+}
+
+void createPIDStatus(const std::string &name, const SimplePID &pid){
+    ImGui::Text("%s:   P: %.3f, I: %.3f, D: %.3f", name.c_str(), pid.p, pid.i, pid.d);
+}
 
 int main(int argc, char const *argv[]){
     ///Create interface to drone
 
     MicroDronInterfaceDummy interface;
     //MicroDronInterfaceOLD interface("127.0.0.1", 51717);
-    sf::RenderWindow window(sf::VideoMode(static_cast<unsigned int>(1200),
-                                          static_cast<unsigned int>(650)), "MicroDron GUI", sf::Style::Close);
+    sf::RenderWindow window(sf::VideoMode(static_cast<unsigned int>(1920 * .45),
+                                          static_cast<unsigned int>(1080 * .75)), "MicroDron GUI", sf::Style::Close);
     window.setFramerateLimit(60);
 
     ImGui::CreateContext();
@@ -67,6 +90,10 @@ int main(int argc, char const *argv[]){
     pitchPid.maxInput =  180;
     pitchPid.minInput = -180;
 
+    window.setFramerateLimit(60);
+
+    bool lastEstop;
+
     while (window.isOpen()) {
         std::chrono::high_resolution_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
 
@@ -82,7 +109,7 @@ int main(int argc, char const *argv[]){
             }
         }
 
-        if(window.hasFocus()){
+        if(true or window.hasFocus()){
             ///Update UI and interactions
 
             ImGui::SFML::Update(window, deltaClock.restart());
@@ -102,19 +129,26 @@ int main(int argc, char const *argv[]){
                 interface.setHeightPid(heightPid);
             }
 
-            if(sf::Keyboard::isKeyPressed(sf::Keyboard::F)){
+            bool eStopKey = sf::Keyboard::isKeyPressed(sf::Keyboard::F);
+            if(eStopKey and eStopKey != lastEstop){
                 interface.emergencyStop();
             }
+            lastEstop = eStopKey;
 
             ImGui::Text("Current mode %i", interface.getMode());
             ImGui::End();
 
             ImGui::Begin("Drone Control", nullptr,ImGuiWindowFlags_AlwaysAutoResize);
-            if(ImGui::Button("Emergency stop")){
+            if(ImGui::Button("Emergency Stop")){
                 interface.emergencyStop();
             }
 
-
+            ImGui::SameLine();
+            if(interface.isEmergencyStopped()){
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Emergency stopped!");
+            } else {
+                ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Running");
+            }
 
             ImGui::Separator();
             ImGui::Text("Manual Control");
@@ -156,82 +190,38 @@ int main(int argc, char const *argv[]){
 
             ImGui::End();
 
-            ImGui::Begin("PID Setup", nullptr,ImGuiWindowFlags_AlwaysAutoResize);
-            ImGui::Text("Pitch   P:%f I:%f D:%f", interface.getPitchPid().p,interface.getPitchPid().i,interface.getPitchPid().d);
-            ImGui::Text("Roll    P:%f I:%f D:%f", interface.getRollPid().p,interface.getRollPid().i,interface.getRollPid().d);
-            ImGui::Text("Yaw     P:%f I:%f D:%f", interface.getYawPid().p,interface.getYawPid().i,interface.getYawPid().d);
-            ImGui::Text("Height  P:%f I:%f D:%f", interface.getHeightPid().p,interface.getHeightPid().i,interface.getHeightPid().d);
-            ImGui::Text("K Value  %f", interface.getK());
+            ImGui::Begin("PID Setup", nullptr,0);
+            createPIDStatus("Pitch", interface.getPitchPid());
+            createPIDStatus("Roll", interface.getRollPid());
+            createPIDStatus("Yaw", interface.getYawPid());
+            createPIDStatus("Height", interface.getHeightPid());
+
+            int objId = 0;
 
             ImGui::Separator();
-            ImGui::PushID(4);
+            ImGui::PushID(objId);
             ImGui::Text("K Value");
             ImGui::InputFloat("K", &k);
-            ImGui::SameLine();
             if(ImGui::Button("Send")){
                 interface.setK(k);
             }
-            ImGui::PopID();
-            ImGui::Text("Pitch");
-            ImGui::PushID(0);
-            ImGui::SameLine();
-            ImGui::InputFloat("P", &pitchPid.p, 0.0f, 0.0f, "%.5f");
-            ImGui::SameLine();
-            ImGui::InputFloat("I", &pitchPid.i, 0.0f, 0.0f, "%.5f");
-            ImGui::SameLine();
-            ImGui::InputFloat("D", &pitchPid.d, 0.0f, 0.0f, "%.5f");
-            ImGui::SameLine();
-            if(ImGui::Button("Send")){
-                interface.setPitchPid(pitchPid);
-            }
+
+            ImGui::Separator();
             ImGui::PopID();
 
-            ImGui::PushID(1);
-            ImGui::Text("Roll");
-            ImGui::SameLine();
-            ImGui::InputFloat("P", &rollPid.p, 0.0f, 0.0f, "%.5f");
-            ImGui::SameLine();
-            ImGui::InputFloat("I", &rollPid.i, 0.0f, 0.0f, "%.5f");
-            ImGui::SameLine();
-            ImGui::InputFloat("D", &rollPid.d, 0.0f, 0.0f, "%.5f");
-            ImGui::SameLine();
-            if(ImGui::Button("Send")){
-                interface.setRollPid(rollPid);
+            objId++;
+            createPIDConfigMenu("Pitch", pitchPid, [&](const SimplePID &pid){interface.setPitchPid(pitchPid);}, objId);
 
-            }
-            ImGui::PopID();
+            objId++;
+            createPIDConfigMenu("Roll", rollPid, [&](const SimplePID &pid){interface.setRollPid(rollPid);}, objId);
 
-            ImGui::PushID(2);
-            ImGui::Text("Yaw");
-            ImGui::SameLine();
-            ImGui::InputFloat("P", &yawPid.p, 0.0f, 0.0f, "%.5f");
-            ImGui::SameLine();
-            ImGui::InputFloat("I", &yawPid.i, 0.0f, 0.0f, "%.5f");
-            ImGui::SameLine();
-            ImGui::InputFloat("D", &yawPid.d, 0.0f, 0.0f, "%.5f");
-            ImGui::SameLine();
-            if(ImGui::Button("Send")){
-                interface.setYawPid(yawPid);
+            objId++;
+            createPIDConfigMenu("Yaw", yawPid, [&](const SimplePID &pid){interface.setYawPid(yawPid);}, objId);
 
-            }
-            ImGui::PopID();
+            objId++;
+            createPIDConfigMenu("Height", heightPid, [&](const SimplePID &pid){interface.setHeightPid(heightPid);}, objId);
 
-            ImGui::PushID(3);
-            ImGui::Text("Height");
-            ImGui::SameLine();
-            ImGui::InputFloat("P", &heightPid.p, 0.0f, 0.0f, "%.5f");
-            ImGui::SameLine();
-            ImGui::InputFloat("I", &heightPid.i, 0.0f, 0.0f, "%.5f");
-            ImGui::SameLine();
-            ImGui::InputFloat("D", &heightPid.d, 0.0f, 0.0f, "%.5f");
-            ImGui::SameLine();
-            if(ImGui::Button("Send")){
-                interface.setHeightPid(heightPid);
-
-            }
-            ImGui::PopID();
-
-            if(ImGui::Button("Save PID")){
+            if(ImGui::Button("Save PID to file")){
                 std::ofstream pidFile("pidSave.txt");
                 pidFile << pitchPid.p << " "
                         << pitchPid.i << " "
@@ -248,7 +238,7 @@ int main(int argc, char const *argv[]){
             }
             ImGui::SameLine();
 
-            if(ImGui::Button("Load PID")){
+            if(ImGui::Button("Load PID from file")){
                 std::ifstream pidFile("pidSave.txt");
                 std::string inputLine;
                 std::getline(pidFile, inputLine);
@@ -267,9 +257,7 @@ int main(int argc, char const *argv[]){
         interface.sendHeartBeat();
 
         window.display();
-
-
     }
     window.close();
     return 0;
-} 
+}

@@ -197,6 +197,10 @@ public:
      */
     void emergencyStop() override;
 
+    bool isEmergencyStopped() const override {
+        return false;
+    }
+
     /**
      * Report whether a valid message has been read from the drone recently
      * @return

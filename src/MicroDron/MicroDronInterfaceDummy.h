@@ -57,9 +57,13 @@ public:
 
     void emergencyStop() override;
 
+    bool isEmergencyStopped() const override;
+
     bool isConnected() const override;
 
     float getHeartbeatTime() const override;
+private:
+    bool emergencyStopped{false};
 };
 
 
