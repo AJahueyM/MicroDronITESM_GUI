@@ -20,4 +20,4 @@ find_package(SFML 2.4 REQUIRED network audio graphics window system)
 
 link_libraries(${SFML_LIBRARIES} GL pthread)
 
-add_executable(MicroDronITESM_GUI  ${MicroDronGUI_SRC} src/MicroDron/MicroDronInterface.cpp src/MicroDron/MicroDronInterface.h)
+add_executable(MicroDronITESM_GUI  ${MicroDronGUI_SRC})

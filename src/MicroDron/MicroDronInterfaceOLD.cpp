@@ -3,24 +3,24 @@
 //
 
 #include <fcntl.h>
-#include "MicroDronInterface.h"
+#include "MicroDronInterfaceOLD.h"
 #include <iostream>
 #include <utility>
 #include <algorithm>
 
-MicroDronInterface::MicroDronInterface(std::string  ipAddress, int port) : ipAddress(std::move(ipAddress)), port(port){
-    updateThread = std::thread(&MicroDronInterface::updateComms, this);
+MicroDronInterfaceOLD::MicroDronInterfaceOLD(std::string  ipAddress, int port) : ipAddress(std::move(ipAddress)), port(port){
+    updateThread = std::thread(&MicroDronInterfaceOLD::updateComms, this);
 }
 
-void MicroDronInterface::updateComms() {
+void MicroDronInterfaceOLD::updateComms() {
 
-    connectionState = ConectionState::SettingUp;
+    connectionState = ConnectionState::SettingUp;
 
     while(isRunning){
         connected = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - lastTimeUpdate).count() < 1.5;
 
         switch(connectionState){
-            case ConectionState::SettingUp:{
+            case ConnectionState::SettingUp:{
                 sock = 0;
 
                 if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) < 0){
@@ -43,21 +43,21 @@ void MicroDronInterface::updateComms() {
                 }
 
                 std::cout << "Connecting...\n";
-                connectionState = ConectionState::Connecting;
+                connectionState = ConnectionState::Connecting;
                 break;
             }
-            case ConectionState::Connecting: {
+            case ConnectionState::Connecting: {
                 int res = connect(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
                 if(res < 0){
                     std::cerr << "Could not connect to socket... Error id: " << errno << " " << strerror(errno)<< ". Retrying\n";
                 }else{
-                    connectionState = ConectionState::Connected;
+                    connectionState = ConnectionState::Connected;
                     std::cout << "Connected" << std::endl;
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
                 break;
             }
-            case ConectionState::Connected: {
+            case ConnectionState::Connected: {
                 char buffer[BUFFER_SIZE];
                 bzero(buffer, sizeof(buffer) - 1);
                 int res = read(sock, buffer, sizeof(buffer) -1);
@@ -67,7 +67,7 @@ void MicroDronInterface::updateComms() {
                      * If no bytes were read and connection was refused, maybe the server disconnected. Try reconnecting
                      */
                     std::cerr << "Server may have disconnected, trying to reconnect\n";
-                    connectionState = ConectionState::SettingUp;
+                    connectionState = ConnectionState::SettingUp;
                     close(sock);
                     break;
                 }else if(res < 0){
@@ -82,7 +82,7 @@ void MicroDronInterface::updateComms() {
     }
 }
 
-void MicroDronInterface::update(const char buffer[BUFFER_SIZE]) {
+void MicroDronInterfaceOLD::update(const char buffer[BUFFER_SIZE]) {
     std::string stringBuffer = std::string(buffer);
     stringBuffer.erase(std::remove(stringBuffer.begin(), stringBuffer.end(), '\n'), stringBuffer.end());
 
@@ -133,47 +133,47 @@ void MicroDronInterface::update(const char buffer[BUFFER_SIZE]) {
     }
 }
 
-float MicroDronInterface::getPitch() const{
+float MicroDronInterfaceOLD::getPitch() const{
     return pitch;
 }
 
-float MicroDronInterface::getRoll() const {
+float MicroDronInterfaceOLD::getRoll() const {
     return roll;
 }
 
-float MicroDronInterface::getYaw() const {
+float MicroDronInterfaceOLD::getYaw() const {
     return yaw;
 }
 
-float MicroDronInterface::getHeight() const {
+float MicroDronInterfaceOLD::getHeight() const {
     return height;
 }
 
-int MicroDronInterface::getMode() const {
+int MicroDronInterfaceOLD::getMode() const {
     return mode;
 }
 
-float MicroDronInterface::getK() const {
+float MicroDronInterfaceOLD::getK() const {
     return k;
 }
 
-float MicroDronInterface::getMotorOutput1() const {
+float MicroDronInterfaceOLD::getMotorOutput1() const {
 return motorOutput1;
 }
 
-float MicroDronInterface::getMotorOutput2() const {
+float MicroDronInterfaceOLD::getMotorOutput2() const {
     return motorOutput2;
 }
 
-float MicroDronInterface::getMotorOutput3() const {
+float MicroDronInterfaceOLD::getMotorOutput3() const {
     return motorOutput3;
 }
 
-float MicroDronInterface::getMotorOutput4() const {
+float MicroDronInterfaceOLD::getMotorOutput4() const {
     return motorOutput4;
 }
 
-void MicroDronInterface::setAllMotorOutput(float output) {
+void MicroDronInterfaceOLD::setAllMotorOutput(float output) {
     std::lock_guard<std::mutex> lock(commandMutex);
     char msg[50] = {'\0'};
     int ret = sprintf(msg,  manualMotorControlTemplate.c_str(), output, output, output, output);
@@ -183,7 +183,7 @@ void MicroDronInterface::setAllMotorOutput(float output) {
 }
 
 
-void MicroDronInterface::setAllMotorOutput(float output1, float output2, float output3, float output4) {
+void MicroDronInterfaceOLD::setAllMotorOutput(float output1, float output2, float output3, float output4) {
     std::lock_guard<std::mutex> lock(commandMutex);
     char msg[50] = {'\0'};
     int ret = sprintf(msg, manualMotorControlTemplate.c_str(), output1, output2, output3, output4);
@@ -192,11 +192,11 @@ void MicroDronInterface::setAllMotorOutput(float output1, float output2, float o
     needToSendCommand = true;
 }
 
-bool MicroDronInterface::isConnected() const {
+bool MicroDronInterfaceOLD::isConnected() const {
     return connected;
 }
 
-void MicroDronInterface::setSetpoints(float pitch, float roll, float yaw, float height) {
+void MicroDronInterfaceOLD::setSetpoints(float pitch, float roll, float yaw, float height) {
     std::lock_guard<std::mutex> lock(commandMutex);
 
     char msg[50] = {'\0'};
@@ -206,7 +206,7 @@ void MicroDronInterface::setSetpoints(float pitch, float roll, float yaw, float 
     needToSendCommand = true;
 }
 
-void MicroDronInterface::setK(float newK) {
+void MicroDronInterfaceOLD::setK(float newK) {
     std::lock_guard<std::mutex> lock(commandMutex);
 
     char msg[50] = {'\0'};
@@ -215,29 +215,29 @@ void MicroDronInterface::setK(float newK) {
     needToSendCommand = true;
 }
 
-void MicroDronInterface::emergencyStop() {
+void MicroDronInterfaceOLD::emergencyStop() {
     std::lock_guard<std::mutex> lock(commandMutex);
     commandToSend = emergencyStopTemplate;
     needToSendCommand = true;
 }
 
-const SimplePID &MicroDronInterface::getPitchPid() const {
+const SimplePID &MicroDronInterfaceOLD::getPitchPid() const {
     return pitchPid;
 }
 
-const SimplePID &MicroDronInterface::getRollPid() const {
+const SimplePID &MicroDronInterfaceOLD::getRollPid() const {
     return rollPid;
 }
 
-const SimplePID &MicroDronInterface::getYawPid() const {
+const SimplePID &MicroDronInterfaceOLD::getYawPid() const {
     return yawPid;
 }
 
-const SimplePID &MicroDronInterface::getHeightPid() const {
+const SimplePID &MicroDronInterfaceOLD::getHeightPid() const {
     return heightPid;
 }
 
-void MicroDronInterface::updatePID(char pidCode, SimplePID pid){
+void MicroDronInterfaceOLD::updatePID(char pidCode, SimplePID pid){
     std::lock_guard<std::mutex> lock(commandMutex);
 
     char msg[150] = {'\0'};
@@ -248,36 +248,36 @@ void MicroDronInterface::updatePID(char pidCode, SimplePID pid){
     needToSendCommand = true;
 
 }
-void MicroDronInterface::setPitchPid(SimplePID pitchPid){
+void MicroDronInterfaceOLD::setPitchPid(SimplePID pitchPid){
     updatePID('P', pitchPid);
 }
 
-void MicroDronInterface::setRollPid(SimplePID rollPid){
+void MicroDronInterfaceOLD::setRollPid(SimplePID rollPid){
     updatePID('R', rollPid);
 
 }
 
-void MicroDronInterface::setYawPid(SimplePID yawPid){
+void MicroDronInterfaceOLD::setYawPid(SimplePID yawPid){
     updatePID('Y', yawPid);
 
 }
 
-void MicroDronInterface::setHeightPid(SimplePID heightPid){
+void MicroDronInterfaceOLD::setHeightPid(SimplePID heightPid){
     updatePID('H', heightPid);
 
 }
 
-void MicroDronInterface::sendHeartBeat(){
+void MicroDronInterfaceOLD::sendHeartBeat(){
     std::lock_guard<std::mutex> lock(commandMutex);
     heartbeatReset = true;
 }
 
 
-float MicroDronInterface::getHeartbeatTime() const {
+float MicroDronInterfaceOLD::getHeartbeatTime() const {
     return droneTime;
 }
 
-MicroDronInterface::~MicroDronInterface() {
+MicroDronInterfaceOLD::~MicroDronInterfaceOLD() {
     isRunning = false;
     close(sock);
     if(updateThread.joinable())

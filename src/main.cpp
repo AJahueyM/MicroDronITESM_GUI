@@ -1,6 +1,6 @@
 // Client side C/C++ program to demonstrate Socket programming 
 #include <iostream>
-#include "MicroDron/MicroDronInterface.h"
+#include "MicroDron/MicroDronInterfaceOLD.h"
 #include "SFML/Graphics.hpp"
 #include "imgui/imgui-SFML.h"
 #include "imgui/imgui.h"
@@ -11,8 +11,8 @@
 int main(int argc, char const *argv[]){
     ///Create interface to drone
 
-    MicroDronInterface interface("192.168.4.1", 23);
-    //MicroDronInterface interface("127.0.0.1", 51717);
+    MicroDronInterfaceOLD interface("192.168.4.1", 23);
+    //MicroDronInterfaceOLD interface("127.0.0.1", 51717);
     sf::RenderWindow window(sf::VideoMode(static_cast<unsigned int>(1200),
                                           static_cast<unsigned int>(650)), "MicroDron GUI", sf::Style::Close);
     window.setFramerateLimit(60);
