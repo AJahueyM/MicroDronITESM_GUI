@@ -3,9 +3,45 @@
 //
 
 #include "MicroDronInterfaceDummy.h"
-#include <algorithm>
+#include <arpa/inet.h>
 #include <cmath>
 #include <chrono>
+
+MicroDronInterfaceDummy::MicroDronInterfaceDummy() {
+    mavlink_attitude_t initialAttitude;
+    initialAttitude.yaw = 0;
+    initialAttitude.pitch = 0;
+    initialAttitude.roll = 0;
+    attitude.store(initialAttitude);
+
+    memset(&gs_server, 0, sizeof(gs_server));
+    memset(&gs_client, 0, sizeof(gs_client));
+
+    gs_server.sin_family = AF_INET;
+    gs_server.sin_addr.s_addr = INADDR_ANY;
+    gs_server.sin_port = htons(gs_port);
+    g_fromLen = sizeof(gs_server);
+
+    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if(sock == -1){
+        exit(EXIT_FAILURE);
+    }
+
+    int ret = bind(sock, (struct sockaddr *) &gs_server, sizeof(struct sockaddr));
+    if(ret < 0){
+        perror("UDP bind failed");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
+//    ret = fcntl(sock, F_SETFL, O_NONBLOCK | FASYNC);
+//    if(ret < 0){
+//        perror("Nonblocking set failed");
+//        close(sock);
+//        exit(EXIT_FAILURE);
+//    }
+    updateThread = std::thread(&MicroDronInterfaceDummy::update, this);
+}
 
 void MicroDronInterfaceDummy::setPitchPid(SimplePID pitchPid) {
 
@@ -28,19 +64,19 @@ void MicroDronInterfaceDummy::sendHeartBeat() {
 }
 
 float MicroDronInterfaceDummy::getPitch() const {
-    return std::sin(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() / 1e3) * 90.0;
+    return attitude.load().pitch * 180.0 / M_PI;
 }
 
 float MicroDronInterfaceDummy::getRoll() const {
-    return std::sin(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() / 1e3) * 90.0;
+    return attitude.load().roll * 180.0 / M_PI;
 }
 
 float MicroDronInterfaceDummy::getYaw() const {
-    return std::sin(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() / 1e3) * 90.0;
+    return attitude.load().yaw * 180.0 / M_PI;
 }
 
 float MicroDronInterfaceDummy::getHeight() const {
-    return std::sin(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() / 1e3) * 90.0;
+    return 0;
 }
 
 int MicroDronInterfaceDummy::getMode() const {
@@ -113,4 +149,37 @@ SimplePID MicroDronInterfaceDummy::getYawPid() const {
 
 SimplePID MicroDronInterfaceDummy::getHeightPid() const {
     return SimplePID();
+}
+
+void MicroDronInterfaceDummy::update(){
+    size_t bufLen = MAVLINK_MAX_PACKET_LEN + sizeof(uint64_t);
+    uint8_t buf[bufLen];
+
+    while(isRunning){
+        memset(buf, 0, bufLen);
+        int len = recvfrom(sock, (void*) buf, bufLen, 0, (struct sockaddr *) &gs_client, &g_fromLen);
+
+        if (len > 0) {
+            mavlink_message_t msg;
+            mavlink_status_t status;
+            mavlink_attitude_t new_attitude;
+
+            for (int i = 0; i < len; ++i) {
+                if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) {
+                    if(msg.msgid == MAVLINK_MSG_ID_ATTITUDE){
+                        mavlink_msg_attitude_decode(&msg, &new_attitude);
+                        attitude = new_attitude;
+                    }
+                }
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
+
+MicroDronInterfaceDummy::~MicroDronInterfaceDummy() {
+    isRunning = false;
+    close(sock);
+    updateThread.join();
 }

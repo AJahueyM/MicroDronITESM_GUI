@@ -6,9 +6,21 @@
 #define MICRODRONITESM_GUI_MICRODRONINTERFACEDUMMY_H
 
 #include "MicroDronInterface.h"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <cstdlib>
+#include <fcntl.h>
+#include <arpa/inet.h>
+#include <cstring>
+#include <thread>
+#include "mavlink.h"
+#include <atomic>
 
 class MicroDronInterfaceDummy : public MicroDronInterface {
 public:
+    MicroDronInterfaceDummy();
+
     SimplePID getPitchPid() const override;
 
     SimplePID getRollPid() const override;
@@ -62,8 +74,19 @@ public:
     bool isConnected() const override;
 
     float getHeartbeatTime() const override;
+
+    ~MicroDronInterfaceDummy();
 private:
+    void update();
     bool emergencyStopped{false};
+    const uint16_t gs_port = 14550;
+    struct sockaddr_in gs_server{}, gs_client{}; //Local IP addr
+    std::atomic<mavlink_attitude_t> attitude{};
+
+    socklen_t g_fromLen;
+    int sock;
+    std::thread updateThread;
+    bool isRunning = true;
 };
 
 

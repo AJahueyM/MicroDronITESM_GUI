@@ -18,7 +18,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 find_package(SFML 2.4 REQUIRED network audio graphics window system)
 
-link_libraries(${SFML_LIBRARIES} GL pthread)
+link_libraries(${SFML_LIBRARIES} GL pthread atomic)
 include_directories(src)
 include_directories(libs/MAVLinkV2/common)
 
