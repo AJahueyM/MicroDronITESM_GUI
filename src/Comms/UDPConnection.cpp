@@ -9,10 +9,9 @@
 #include <fcntl.h>
 #include <arpa/inet.h>
 
-UDPConnection::UDPConnection(const std::string &droneIp, uint16_t sendPort, uint16_t recvPort) {
+UDPConnection::UDPConnection(const std::string &droneIp, uint16_t port) {
     this->droneIp = droneIp;
-    this->targetSendPort = sendPort;
-    this->targetRecvPort = recvPort;
+    this->port = port;
 }
 
 void UDPConnection::startConnection() {
@@ -25,7 +24,8 @@ void UDPConnection::startConnection() {
     memset(reinterpret_cast<wchar_t *>(&locAddr), 0, sizeof(locAddr));
     locAddr.sin_family = AF_INET;
     locAddr.sin_addr.s_addr = INADDR_ANY;
-    locAddr.sin_port = htons(targetSendPort);
+    locAddr.sin_port = htons(port);
+    fromLen = sizeof(locAddr);
 
     int ret = bind(sock, (struct sockaddr *) &locAddr, sizeof(struct sockaddr));
     if(ret < 0){
@@ -34,18 +34,17 @@ void UDPConnection::startConnection() {
         throw std::runtime_error("UDP bind failed");
     }
 
-    ret = fcntl(sock, F_SETFL, O_NONBLOCK | FASYNC);
-    if(ret < 0){
-        perror("Nonblocking set failed");
-        close(sock);
-        throw std::runtime_error("Nonblocking set failed");
-    }
+//    ret = fcntl(sock, F_SETFL, O_NONBLOCK | FASYNC);
+//    if(ret < 0){
+//        perror("Nonblocking set failed");
+//        close(sock);
+//        throw std::runtime_error("Nonblocking set failed");
+//    }
 
     memset(reinterpret_cast<wchar_t *>(&droneAddr), 0, sizeof(locAddr));
     droneAddr.sin_family = AF_INET;
     droneAddr.sin_addr.s_addr = inet_addr(droneIp.c_str());
-    droneAddr.sin_port = htons(targetRecvPort);
-    fromLen = sizeof(droneAddr);
+    droneAddr.sin_port = htons(port);
 }
 
 int UDPConnection::send(const uint8_t *buf, char len) {
@@ -53,7 +52,7 @@ int UDPConnection::send(const uint8_t *buf, char len) {
 }
 
 int UDPConnection::recv(uint8_t *buf, char bufLen) {
-    return recvfrom(sock, (void*) buf, bufLen, 0, (struct sockaddr *) &droneAddr, &fromLen);
+    return recvfrom(sock, (void*) buf, bufLen, 0, (struct sockaddr *) &locAddr, &fromLen);
 }
 
 void UDPConnection::closeConnection() {

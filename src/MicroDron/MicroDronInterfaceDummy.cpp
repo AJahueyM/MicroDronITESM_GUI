@@ -14,25 +14,8 @@ MicroDronInterfaceDummy::MicroDronInterfaceDummy() {
     initialAttitude.roll = 0;
     attitude.store(initialAttitude);
 
-    memset(&gs_server, 0, sizeof(gs_server));
-    memset(&gs_client, 0, sizeof(gs_client));
-
-    gs_server.sin_family = AF_INET;
-    gs_server.sin_addr.s_addr = INADDR_ANY;
-    gs_server.sin_port = htons(gs_port);
-    g_fromLen = sizeof(gs_server);
-
-    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if(sock == -1){
-        exit(EXIT_FAILURE);
-    }
-
-    int ret = bind(sock, (struct sockaddr *) &gs_server, sizeof(struct sockaddr));
-    if(ret < 0){
-        perror("UDP bind failed");
-        close(sock);
-        exit(EXIT_FAILURE);
-    }
+    conn = std::make_unique<UDPConnection>("127.0.0.1", 14550);
+    conn->startConnection();
 
 //    ret = fcntl(sock, F_SETFL, O_NONBLOCK | FASYNC);
 //    if(ret < 0){
@@ -157,7 +140,7 @@ void MicroDronInterfaceDummy::update(){
 
     while(isRunning){
         memset(buf, 0, bufLen);
-        int len = recvfrom(sock, (void*) buf, bufLen, 0, (struct sockaddr *) &gs_client, &g_fromLen);
+        int len = conn->recv(buf, bufLen);
 
         if (len > 0) {
             mavlink_message_t msg;
@@ -180,6 +163,6 @@ void MicroDronInterfaceDummy::update(){
 
 MicroDronInterfaceDummy::~MicroDronInterfaceDummy() {
     isRunning = false;
-    close(sock);
+    conn->closeConnection();
     updateThread.join();
 }
