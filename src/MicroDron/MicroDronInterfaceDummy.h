@@ -82,9 +82,12 @@ private:
     bool emergencyStopped{false};
     const uint16_t gs_port = 14550;
     struct sockaddr_in gs_server{}, gs_client{}; //Local IP addr
+
     std::atomic<mavlink_attitude_t> attitude{};
 
     std::unique_ptr<UDPConnection> conn;
+
+    std::chrono::high_resolution_clock::time_point lastHb;
 
     std::thread updateThread;
     bool isRunning = true;

@@ -6,16 +6,19 @@
 #include <arpa/inet.h>
 #include <cmath>
 #include <chrono>
+#include <iostream>
 
 MicroDronInterfaceDummy::MicroDronInterfaceDummy() {
-    mavlink_attitude_t initialAttitude;
+    mavlink_attitude_t initialAttitude{};
     initialAttitude.yaw = 0;
     initialAttitude.pitch = 0;
     initialAttitude.roll = 0;
     attitude.store(initialAttitude);
 
-    conn = std::make_unique<UDPConnection>("127.0.0.1", 14550);
+    conn = std::make_unique<UDPConnection>("127.0.0.1", 14551, 14550);
     conn->startConnection();
+
+    lastHb = std::chrono::high_resolution_clock::now();
 
 //    ret = fcntl(sock, F_SETFL, O_NONBLOCK | FASYNC);
 //    if(ret < 0){
@@ -111,11 +114,11 @@ bool MicroDronInterfaceDummy::isEmergencyStopped() const {
 }
 
 bool MicroDronInterfaceDummy::isConnected() const {
-    return false;
+    return getHeartbeatTime() < 100;
 }
 
 float MicroDronInterfaceDummy::getHeartbeatTime() const {
-    return 0;
+    return std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - lastHb).count() * 1000.0f; //Convert to MS
 }
 
 SimplePID MicroDronInterfaceDummy::getPitchPid() const {
@@ -151,7 +154,14 @@ void MicroDronInterfaceDummy::update(){
                 if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) {
                     if(msg.msgid == MAVLINK_MSG_ID_ATTITUDE){
                         mavlink_msg_attitude_decode(&msg, &new_attitude);
-                        attitude = new_attitude;
+                        std::cout << new_attitude.pitch << std::endl;
+                        attitude.store(new_attitude);
+                    } else if(msg.msgid == MAVLINK_MSG_ID_HEARTBEAT){
+                        lastHb = std::chrono::high_resolution_clock::now();
+                    } else if(msg.msgid == MAVLINK_MSG_ID_SYSTEM_TIME){
+                        ;
+                    } else {
+                        std::cout << msg.msgid << std::endl;
                     }
                 }
             }

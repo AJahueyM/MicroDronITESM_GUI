@@ -11,6 +11,7 @@
 
 class UDPConnection {
 public:
+    UDPConnection(const std::string &droneIp, uint16_t rxPort, uint16_t txPort);
     UDPConnection(const std::string &droneIp, uint16_t port);
     ~UDPConnection();
 
@@ -24,7 +25,8 @@ public:
 private:
     std::string droneIp;
 
-    uint16_t port;
+    uint16_t rxPort;
+    uint16_t txPort;
 
     sockaddr_in droneAddr{};
     sockaddr_in locAddr{};

@@ -119,7 +119,7 @@ int main(int argc, char const *argv[]){
             ImGui::PlotVar("Roll", interface.getRoll(), -90, 90);
             ImGui::PlotVar("Yaw", interface.getYaw(), -90, 90);
             ImGui::PlotVar("Height", interface.getHeight(), -5, 5);
-            ImGui::PlotVar("Drone heartbeat", interface.getHeartbeatTime(), 0, 500);
+            ImGui::PlotVar("Drone heartbeat", interface.getHeartbeatTime(), 0, 50);
 
             if(sf::Keyboard::isKeyPressed(sf::Keyboard::U)){
                 interface.setK(k);
