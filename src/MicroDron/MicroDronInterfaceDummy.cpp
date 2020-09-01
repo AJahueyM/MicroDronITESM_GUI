@@ -6,6 +6,9 @@
 #include <arpa/inet.h>
 #include <cmath>
 #include <chrono>
+#include <string>
+#include <stdexcept>
+#include <iostream>
 
 MicroDronInterfaceDummy::MicroDronInterfaceDummy() {
     mavlink_attitude_t initialAttitude;
@@ -14,8 +17,14 @@ MicroDronInterfaceDummy::MicroDronInterfaceDummy() {
     initialAttitude.roll = 0;
     attitude.store(initialAttitude);
 
-    conn = std::make_unique<UDPConnection>("127.0.0.1", 14550);
-    conn->startConnection();
+    std::string addr("127.0.0.1");
+    int ret = udp_conn_open_ip(&conn, addr.c_str(), 14551, 14550);
+
+    if(ret < 0){
+        perror("UDP conn open failed");
+        udp_conn_close(&conn);
+        throw std::runtime_error("UDP conn open failed");
+    }
 
 //    ret = fcntl(sock, F_SETFL, O_NONBLOCK | FASYNC);
 //    if(ret < 0){
@@ -115,7 +124,7 @@ bool MicroDronInterfaceDummy::isConnected() const {
 }
 
 float MicroDronInterfaceDummy::getHeartbeatTime() const {
-    return 0;
+    return std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - lastHb).count() * 1000.0;
 }
 
 SimplePID MicroDronInterfaceDummy::getPitchPid() const {
@@ -140,7 +149,7 @@ void MicroDronInterfaceDummy::update(){
 
     while(isRunning){
         memset(buf, 0, bufLen);
-        int len = conn->recv(buf, bufLen);
+        int len = udp_conn_recv(&conn, buf, bufLen);
 
         if (len > 0) {
             mavlink_message_t msg;
@@ -152,6 +161,8 @@ void MicroDronInterfaceDummy::update(){
                     if(msg.msgid == MAVLINK_MSG_ID_ATTITUDE){
                         mavlink_msg_attitude_decode(&msg, &new_attitude);
                         attitude = new_attitude;
+                    } else if(msg.msgid == MAVLINK_MSG_ID_HEARTBEAT){
+                        lastHb = std::chrono::high_resolution_clock::now();
                     }
                 }
             }
@@ -163,6 +174,6 @@ void MicroDronInterfaceDummy::update(){
 
 MicroDronInterfaceDummy::~MicroDronInterfaceDummy() {
     isRunning = false;
-    conn->closeConnection();
+    udp_conn_close(&conn);
     updateThread.join();
 }

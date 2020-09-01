@@ -16,7 +16,10 @@
 #include <thread>
 #include "mavlink.h"
 #include <atomic>
-#include "Comms/UDPConnection.h"
+
+extern "C"{
+#include <UDP.h>
+};
 
 class MicroDronInterfaceDummy : public MicroDronInterface {
 public:
@@ -84,7 +87,9 @@ private:
     struct sockaddr_in gs_server{}, gs_client{}; //Local IP addr
     std::atomic<mavlink_attitude_t> attitude{};
 
-    std::unique_ptr<UDPConnection> conn;
+    udp_conn_data conn;
+
+    std::chrono::high_resolution_clock::time_point lastHb;
 
     std::thread updateThread;
     bool isRunning = true;
