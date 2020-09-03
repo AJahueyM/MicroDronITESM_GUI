@@ -26,5 +26,6 @@ link_libraries(${SFML_LIBRARIES} GL pthread atomic lua fmt::fmt)
 include_directories(src)
 include_directories(libs/MAVLinkV2/common)
 include_directories(libs/UDPLib/include)
+include_directories(libs/lua)
 
 add_executable(MicroDronITESM_GUI  ${MicroDronGUI_SRC})
