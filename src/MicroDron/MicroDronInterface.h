@@ -6,6 +6,7 @@
 #define MICRODRONITESM_GUI_MICRODRONINTERFACE_H
 
 #include "SimplePID.h"
+#include <iostream>
 
 enum class ConnectionState{
     SettingUp,
@@ -184,6 +185,10 @@ public:
      * @return
      */
     virtual float getHeartbeatTime() const = 0;
+
+    virtual void takeoff(double height){
+        std::cout << "TAKEOFF: " << height << std::endl;
+    }
 };
 
 #endif //MICRODRONITESM_GUI_MICRODRONINTERFACE_H

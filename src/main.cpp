@@ -8,6 +8,7 @@
 #include <chrono>
 #include <fstream>
 #include <functional>
+#include "MicroDron/LuaMicroDronInterface.h"
 
 void createPIDConfigMenu(const std::string &name, SimplePID &pid, const std::function<void(const SimplePID &pid)> &setFun, int id){
     ImGui::Text("%s", name.c_str());
@@ -89,6 +90,15 @@ int main(int argc, char const *argv[]){
     pitchPid.continuous = true;
     pitchPid.maxInput =  180;
     pitchPid.minInput = -180;
+
+    lua_State *luaState;
+    luaState = luaL_newstate();
+    luaL_openlibs(luaState);
+
+    LuaMicroDronInterface::setMicroDronInterface(std::shared_ptr<MicroDronInterface>(&interface));
+    LuaMicroDronInterface::registerFunctions(luaState);
+
+    luaL_dofile(luaState, "helloDrone.lua");
 
     window.setFramerateLimit(60);
 

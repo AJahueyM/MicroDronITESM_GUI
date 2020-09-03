@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 project(MicroDronITESM_GUI)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 file(GLOB_RECURSE MicroDronGUI_SRC
         "src/*.h"
@@ -20,7 +20,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 find_package(SFML 2.4 REQUIRED network audio graphics window system)
 
-link_libraries(${SFML_LIBRARIES} GL pthread atomic)
+link_libraries(${SFML_LIBRARIES} GL pthread atomic lua)
 include_directories(src)
 include_directories(libs/MAVLinkV2/common)
 include_directories(libs/UDPLib/include)
