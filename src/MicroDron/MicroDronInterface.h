@@ -7,6 +7,7 @@
 
 #include "SimplePID.h"
 #include <iostream>
+#include <fmt/format.h>
 
 enum class ConnectionState{
     SettingUp,
@@ -187,7 +188,7 @@ public:
     virtual float getHeartbeatTime() const = 0;
 
     virtual void takeoff(double height){
-        std::cout << "TAKEOFF: " << height << std::endl;
+        std::cout << fmt::format("Taking off to height: {}", height) << std::endl;
     }
 };
 

@@ -25,6 +25,12 @@ jobs:
       - name: Install SFML
         run: sudo apt-get install libsfml-dev
 
+      - name: Install LUA
+          run: sudo apt-get install liblua5.3-dev
+
+      - name: Install FMT
+          run: sudo apt-get install libfmt-dev
+
       - name: Configure CMake
         # Use a bash shell so we can use the same syntax for environment variable
         # access regardless of the host operating system

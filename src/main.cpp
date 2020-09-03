@@ -1,6 +1,6 @@
 // Client side C/C++ program to demonstrate Socket programming 
 #include <iostream>
-#include "MicroDron/MicroDronInterfaceDummy.h"
+#include "MicroDron/MicroDronInterfaceUDP.h"
 #include "SFML/Graphics.hpp"
 #include "imgui/imgui-SFML.h"
 #include "imgui/imgui.h"
@@ -35,7 +35,7 @@ void createPIDStatus(const std::string &name, const SimplePID &pid){
 int main(int argc, char const *argv[]){
     ///Create interface to drone
 
-    MicroDronInterfaceDummy interface;
+    MicroDronInterfaceUDP interface;
     //MicroDronInterfaceOLD interface("127.0.0.1", 51717);
     sf::RenderWindow window(sf::VideoMode(static_cast<unsigned int>(1920 * .45),
                                           static_cast<unsigned int>(1080 * .75)), "MicroDron GUI", sf::Style::Close);

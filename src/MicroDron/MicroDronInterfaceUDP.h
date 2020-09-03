@@ -2,8 +2,8 @@
 // Created by abiel on 8/19/20.
 //
 
-#ifndef MICRODRONITESM_GUI_MICRODRONINTERFACEDUMMY_H
-#define MICRODRONITESM_GUI_MICRODRONINTERFACEDUMMY_H
+#ifndef MICRODRONITESM_GUI_MICRODRONINTERFACEUDP_H
+#define MICRODRONITESM_GUI_MICRODRONINTERFACEUDP_H
 
 #include "MicroDronInterface.h"
 #include <sys/socket.h>
@@ -21,9 +21,9 @@ extern "C"{
 #include <UDP.h>
 };
 
-class MicroDronInterfaceDummy : public MicroDronInterface {
+class MicroDronInterfaceUDP : public MicroDronInterface {
 public:
-    MicroDronInterfaceDummy();
+    MicroDronInterfaceUDP();
 
     SimplePID getPitchPid() const override;
 
@@ -67,7 +67,7 @@ public:
 
     void setAllMotorOutput(float output1, float output2, float output3, float output4) override;
 
-    void setSetpoints(float pitch, float roll, float yaw, float height) override;
+    void setSetpoints(float roll, float pitch, float yaw, float height) override;
 
     void setK(float newK) override;
 
@@ -79,7 +79,7 @@ public:
 
     float getHeartbeatTime() const override;
 
-    ~MicroDronInterfaceDummy();
+    ~MicroDronInterfaceUDP();
 private:
     void update();
     bool emergencyStopped{false};
@@ -96,4 +96,4 @@ private:
 };
 
 
-#endif //MICRODRONITESM_GUI_MICRODRONINTERFACEDUMMY_H
+#endif //MICRODRONITESM_GUI_MICRODRONINTERFACEUDP_H

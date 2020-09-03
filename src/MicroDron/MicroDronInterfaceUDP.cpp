@@ -2,15 +2,16 @@
 // Created by abiel on 8/19/20.
 //
 
-#include "MicroDronInterfaceDummy.h"
+#include "MicroDronInterfaceUDP.h"
 #include <arpa/inet.h>
 #include <cmath>
 #include <chrono>
 #include <string>
 #include <stdexcept>
 #include <iostream>
+#include <fmt/format.h>
 
-MicroDronInterfaceDummy::MicroDronInterfaceDummy() {
+MicroDronInterfaceUDP::MicroDronInterfaceUDP() {
     mavlink_attitude_t initialAttitude;
     initialAttitude.yaw = 0;
     initialAttitude.pitch = 0;
@@ -32,118 +33,122 @@ MicroDronInterfaceDummy::MicroDronInterfaceDummy() {
 //        close(sock);
 //        exit(EXIT_FAILURE);
 //    }
-    updateThread = std::thread(&MicroDronInterfaceDummy::update, this);
+    lastHb = std::chrono::high_resolution_clock::now();
+    updateThread = std::thread(&MicroDronInterfaceUDP::update, this);
 }
 
-void MicroDronInterfaceDummy::setPitchPid(SimplePID pitchPid) {
-
-}
-
-void MicroDronInterfaceDummy::setRollPid(SimplePID rollPid) {
+void MicroDronInterfaceUDP::setPitchPid(SimplePID pitchPid) {
 
 }
 
-void MicroDronInterfaceDummy::setYawPid(SimplePID yawPid) {
+void MicroDronInterfaceUDP::setRollPid(SimplePID rollPid) {
 
 }
 
-void MicroDronInterfaceDummy::setHeightPid(SimplePID heightPid) {
+void MicroDronInterfaceUDP::setYawPid(SimplePID yawPid) {
 
 }
 
-void MicroDronInterfaceDummy::sendHeartBeat() {
+void MicroDronInterfaceUDP::setHeightPid(SimplePID heightPid) {
 
 }
 
-float MicroDronInterfaceDummy::getPitch() const {
+void MicroDronInterfaceUDP::sendHeartBeat() {
+
+}
+
+float MicroDronInterfaceUDP::getPitch() const {
     return attitude.load().pitch * 180.0 / M_PI;
 }
 
-float MicroDronInterfaceDummy::getRoll() const {
+float MicroDronInterfaceUDP::getRoll() const {
     return attitude.load().roll * 180.0 / M_PI;
 }
 
-float MicroDronInterfaceDummy::getYaw() const {
+float MicroDronInterfaceUDP::getYaw() const {
     return attitude.load().yaw * 180.0 / M_PI;
 }
 
-float MicroDronInterfaceDummy::getHeight() const {
+float MicroDronInterfaceUDP::getHeight() const {
     return 0;
 }
 
-int MicroDronInterfaceDummy::getMode() const {
+int MicroDronInterfaceUDP::getMode() const {
     return 0;
 }
 
-float MicroDronInterfaceDummy::getK() const {
+float MicroDronInterfaceUDP::getK() const {
     return 0;
 }
 
-float MicroDronInterfaceDummy::getMotorOutput1() const {
+float MicroDronInterfaceUDP::getMotorOutput1() const {
     return 0;
 }
 
-float MicroDronInterfaceDummy::getMotorOutput2() const {
+float MicroDronInterfaceUDP::getMotorOutput2() const {
     return 0;
 }
 
-float MicroDronInterfaceDummy::getMotorOutput3() const {
+float MicroDronInterfaceUDP::getMotorOutput3() const {
     return 0;
 }
 
-float MicroDronInterfaceDummy::getMotorOutput4() const {
+float MicroDronInterfaceUDP::getMotorOutput4() const {
     return 0;
 }
 
-void MicroDronInterfaceDummy::setAllMotorOutput(float output) {
+void MicroDronInterfaceUDP::setAllMotorOutput(float output) {
 
 }
 
-void MicroDronInterfaceDummy::setAllMotorOutput(float output1, float output2, float output3, float output4) {
+void MicroDronInterfaceUDP::setAllMotorOutput(float output1, float output2, float output3, float output4) {
 
 }
 
-void MicroDronInterfaceDummy::setSetpoints(float pitch, float roll, float yaw, float height) {
+void MicroDronInterfaceUDP::setSetpoints(float roll, float pitch, float yaw, float height) {
+    std::cout << fmt::format("{}, {}, {}, {}", roll, pitch, yaw, height) << std::endl;
+}
+
+void MicroDronInterfaceUDP::setK(float newK) {
 
 }
 
-void MicroDronInterfaceDummy::setK(float newK) {
-
-}
-
-void MicroDronInterfaceDummy::emergencyStop() {
+void MicroDronInterfaceUDP::emergencyStop() {
     emergencyStopped = !emergencyStopped;
+    if(emergencyStopped){
+        std::cout << "Estopped" << std::endl;
+    }
 }
 
-bool MicroDronInterfaceDummy::isEmergencyStopped() const {
+bool MicroDronInterfaceUDP::isEmergencyStopped() const {
     return emergencyStopped;
 }
 
-bool MicroDronInterfaceDummy::isConnected() const {
-    return false;
+bool MicroDronInterfaceUDP::isConnected() const {
+    return (std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - lastHb).count()) < 0.1;
 }
 
-float MicroDronInterfaceDummy::getHeartbeatTime() const {
-    return std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - lastHb).count() * 1000.0;
+float MicroDronInterfaceUDP::getHeartbeatTime() const {
+    return std::min(1e3, std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - lastHb).count() * 1000.0);
 }
 
-SimplePID MicroDronInterfaceDummy::getPitchPid() const {
+SimplePID MicroDronInterfaceUDP::getPitchPid() const {
     return SimplePID();
 }
 
-SimplePID MicroDronInterfaceDummy::getRollPid() const {
+SimplePID MicroDronInterfaceUDP::getRollPid() const {
     return SimplePID();
 }
 
-SimplePID MicroDronInterfaceDummy::getYawPid() const {
+SimplePID MicroDronInterfaceUDP::getYawPid() const {
     return SimplePID();
 }
 
-SimplePID MicroDronInterfaceDummy::getHeightPid() const {
+SimplePID MicroDronInterfaceUDP::getHeightPid() const {
     return SimplePID();
 }
 
-void MicroDronInterfaceDummy::update(){
+void MicroDronInterfaceUDP::update(){
     size_t bufLen = MAVLINK_MAX_PACKET_LEN + sizeof(uint64_t);
     uint8_t buf[bufLen];
 
@@ -172,7 +177,7 @@ void MicroDronInterfaceDummy::update(){
     }
 }
 
-MicroDronInterfaceDummy::~MicroDronInterfaceDummy() {
+MicroDronInterfaceUDP::~MicroDronInterfaceUDP() {
     isRunning = false;
     udp_conn_close(&conn);
     updateThread.join();
