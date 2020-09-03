@@ -26,7 +26,7 @@ jobs:
         run: sudo apt-get install libsfml-dev
 
       - name: Install LUA
-        run: sudo apt-get install liblua5.3-dev
+        run: sudo apt-get install liblua5.4-dev
 
       - name: Install FMT
         run: sudo apt-get install libfmt-dev
