@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 project(MicroDronITESM_GUI)
 
 set(CMAKE_CXX_STANDARD 17)
+find_package(Lua REQUIRED)
 
 file(GLOB_RECURSE MicroDronGUI_SRC
         "src/*.h"
@@ -22,10 +23,10 @@ find_package(SFML 2.4 REQUIRED network audio graphics window system)
 
 find_package(fmt)
 
-link_libraries(${SFML_LIBRARIES} GL pthread atomic lua fmt::fmt)
+link_libraries(${SFML_LIBRARIES} GL pthread atomic ${LUA_LIBRARIES} fmt::fmt)
 include_directories(src)
 include_directories(libs/MAVLinkV2/common)
 include_directories(libs/UDPLib/include)
-include_directories(libs/lua)
+include_directories(${LUA_INCLUDE_DIR})
 
 add_executable(MicroDronITESM_GUI  ${MicroDronGUI_SRC})
