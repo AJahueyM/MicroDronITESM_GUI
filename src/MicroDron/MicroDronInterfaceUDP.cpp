@@ -70,7 +70,7 @@ float MicroDronInterfaceUDP::getYaw() const {
 }
 
 float MicroDronInterfaceUDP::getHeight() const {
-    return 0;
+    return distanceSensor.load().current_distance;
 }
 
 int MicroDronInterfaceUDP::getMode() const {
@@ -125,11 +125,11 @@ bool MicroDronInterfaceUDP::isEmergencyStopped() const {
 }
 
 bool MicroDronInterfaceUDP::isConnected() const {
-    return (std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - lastHb).count()) < 0.1;
+    return getHeartbeatTime() < 0.5;
 }
 
 float MicroDronInterfaceUDP::getHeartbeatTime() const {
-    return std::min(1e3, std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - lastHb).count() * 1000.0);
+    return std::min(1e3, std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - lastHb).count());
 }
 
 SimplePID MicroDronInterfaceUDP::getPitchPid() const {
@@ -160,20 +160,29 @@ void MicroDronInterfaceUDP::update(){
             mavlink_message_t msg;
             mavlink_status_t status;
             mavlink_attitude_t new_attitude;
-
+            mavlink_distance_sensor_t new_distanceSensor;
             for (int i = 0; i < len; ++i) {
                 if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) {
-                    if(msg.msgid == MAVLINK_MSG_ID_ATTITUDE){
-                        mavlink_msg_attitude_decode(&msg, &new_attitude);
-                        attitude = new_attitude;
-                    } else if(msg.msgid == MAVLINK_MSG_ID_HEARTBEAT){
-                        lastHb = std::chrono::high_resolution_clock::now();
+                    switch (msg.msgid) {
+                        case MAVLINK_MSG_ID_ATTITUDE:
+                            mavlink_msg_attitude_decode(&msg, &new_attitude);
+                            attitude = new_attitude;
+                            break;
+                        case MAVLINK_MSG_ID_DISTANCE_SENSOR:
+                            mavlink_msg_distance_sensor_decode(&msg, &new_distanceSensor);
+                            distanceSensor = new_distanceSensor;
+                            break;
+                        case MAVLINK_MSG_ID_HEARTBEAT:
+                            lastHb = std::chrono::high_resolution_clock::now();
+                            break;
+                        default:
+                            break;
                     }
                 }
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 }
 

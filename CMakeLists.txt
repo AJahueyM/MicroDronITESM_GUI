@@ -22,7 +22,7 @@ find_package(SFML 2.4 REQUIRED network audio graphics window system)
 
 find_package(fmt)
 
-link_libraries(${SFML_LIBRARIES} GL pthread atomic lua fmt::fmt)
+link_libraries(${SFML_LIBRARIES} GL pthread atomic lua dl fmt::fmt)
 include_directories(src)
 include_directories(libs/MAVLinkV2/common)
 include_directories(libs/UDPLib/include)
