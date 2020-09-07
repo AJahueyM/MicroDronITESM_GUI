@@ -187,6 +187,8 @@ public:
      */
     virtual float getHeartbeatTime() const = 0;
 
+    virtual void sendJoystickControl(int16_t x, int16_t y, int16_t z, int16_t r) = 0;
+
     virtual void takeoff(double height){
         std::cout << fmt::format("Taking off to height: {}", height) << std::endl;
     }

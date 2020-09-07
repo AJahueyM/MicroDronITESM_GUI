@@ -197,7 +197,6 @@ int main(int argc, char const *argv[]){
             }
             lastE = sf::Keyboard::isKeyPressed(sf::Keyboard::E);
 
-
             ImGui::End();
 
             ImGui::Begin("PID Setup", nullptr,0);
@@ -265,6 +264,15 @@ int main(int argc, char const *argv[]){
         ImGui::SFML::Render(window);
 
         interface.sendHeartBeat();
+
+        if(sf::Joystick::isConnected(0)){
+            float x = sf::Joystick::getAxisPosition(0, sf::Joystick::X) * 10.0;
+            float y = sf::Joystick::getAxisPosition(0, sf::Joystick::Y) * 10.0;
+            float z = -sf::Joystick::getAxisPosition(0, sf::Joystick::V) * 10.0;
+            float r = sf::Joystick::getAxisPosition(0, sf::Joystick::U) * 10.0;
+
+            interface.sendJoystickControl(x, y, z, r);
+        }
 
         window.display();
     }

@@ -21,7 +21,7 @@ MicroDronInterfaceUDP::MicroDronInterfaceUDP() {
     std::string addr("127.0.0.1");
     int ret = udp_conn_open_ip(&conn, addr.c_str(), 14551, 14550);
 
-    if(ret < 0){
+    if (ret < 0) {
         perror("UDP conn open failed");
         udp_conn_close(&conn);
         throw std::runtime_error("UDP conn open failed");
@@ -115,7 +115,7 @@ void MicroDronInterfaceUDP::setK(float newK) {
 
 void MicroDronInterfaceUDP::emergencyStop() {
     emergencyStopped = !emergencyStopped;
-    if(emergencyStopped){
+    if (emergencyStopped) {
         std::cout << "Estopped" << std::endl;
     }
 }
@@ -148,11 +148,26 @@ SimplePID MicroDronInterfaceUDP::getHeightPid() const {
     return SimplePID();
 }
 
-void MicroDronInterfaceUDP::update(){
+void MicroDronInterfaceUDP::sendJoystickControl(int16_t x, int16_t y, int16_t z, int16_t r) {
+    const int16_t maxVal = 1000;
+    const int16_t minVal = -1000;
+    mavlink_message_t msg;
+    mavlink_msg_manual_control_pack(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, MAV_COMP_ID_AUTOPILOT1,
+                                    std::clamp(x, minVal, maxVal), std::clamp(y, minVal, maxVal),
+                                    std::clamp(z, minVal, maxVal), std::clamp(r, minVal, maxVal), 0);
+
+    size_t bufLen = MAVLINK_MAX_PACKET_LEN + sizeof(uint64_t);
+    uint8_t buf[bufLen];
+    auto size = mavlink_msg_to_send_buffer(buf, &msg);
+
+    udp_conn_send(&conn, buf, size);
+}
+
+void MicroDronInterfaceUDP::update() {
     size_t bufLen = MAVLINK_MAX_PACKET_LEN + sizeof(uint64_t);
     uint8_t buf[bufLen];
 
-    while(isRunning){
+    while (isRunning) {
         memset(buf, 0, bufLen);
         int len = udp_conn_recv(&conn, buf, bufLen);
 

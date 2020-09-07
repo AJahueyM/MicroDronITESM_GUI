@@ -69,6 +69,8 @@ public:
 
     void setSetpoints(float roll, float pitch, float yaw, float height) override;
 
+    void sendJoystickControl(int16_t x, int16_t y, int16_t z, int16_t r) override;
+
     void setK(float newK) override;
 
     void emergencyStop() override;
