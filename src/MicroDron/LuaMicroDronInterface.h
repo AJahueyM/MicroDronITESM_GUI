@@ -42,6 +42,8 @@ protected:
 
     static int lua_sleep_ms(lua_State *L);
 
+    inline static float setHeight;
+
 private:
     LuaMicroDronInterface();
 

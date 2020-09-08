@@ -5,6 +5,7 @@
 #include "LuaMicroDronInterface.h"
 #include <stdexcept>
 #include <thread>
+#include <fmt/format.h>
 
 LuaMicroDronInterface::LuaMicroDronInterface() {
     ;
@@ -36,15 +37,17 @@ int LuaMicroDronInterface::lua_sleep_ms(lua_State *L) {
 
 int LuaMicroDronInterface::lua_drone_takeoff(lua_State *L) {
     double height = lua_tonumber(L, 1);
-    //interface->takeoff(height);
-    interface->sendJoystickControl(0,0,800,0);
+    //std::cout << fmt::format("Takeoff: {}", height) << std::endl;
+    setHeight = height;
+    interface->sendJoystickControl(0,0,height,0);
     return 0;
 }
 
 int LuaMicroDronInterface::lua_drone_land(lua_State *L) {
     //interface->land();
-    std::cout<<"LAND" <<std::endl;
+    //std::cout<<"LAND" <<std::endl;
     interface->sendJoystickControl(0,0,0,0);
+    setHeight = 0;
     return 0;
 }
 
@@ -61,6 +64,7 @@ int LuaMicroDronInterface::lua_drone_set_rot(lua_State *L) {
     y = lua_tonumber(L, 3);
 
     //interface->setSetpoints(r, p, y);
+    interface->sendJoystickControl(r,p,setHeight,y);
 
     if(lua_gettop(L) == 4){
         double time = lua_tonumber(L, 4);
@@ -76,7 +80,9 @@ int LuaMicroDronInterface::lua_drone_hover(lua_State *L) {
     double height = lua_tonumber(L, 1);
 
     //interface->setHeight(height);
-    std::cout << fmt::format("Hovering at: {}", height) << std::endl;
+    //std::cout << fmt::format("Hovering at: {}", height) << std::endl;
+    interface->sendJoystickControl(0,0,height,0);
+    setHeight = height;
 
     if(lua_gettop(L) > 1){
         double time = lua_tonumber(L, 2);
