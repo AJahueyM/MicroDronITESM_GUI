@@ -154,8 +154,11 @@ void MicroDronInterfaceUDP::sendJoystickControl(int16_t x, int16_t y, int16_t z,
     const int16_t minVal = -1000;
     mavlink_message_t msg;
     mavlink_msg_manual_control_pack(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, MAV_COMP_ID_AUTOPILOT1,
-                                    std::clamp(x, minVal, maxVal), std::clamp(y, minVal, maxVal),
-                                    std::clamp(z, minVal, maxVal), std::clamp(r, minVal, maxVal), 0);
+                                    x, y,
+                                    z, r,0);
+
+    std::cout << r / 100.0 << " " << z / 100.0 << " " << y  / 100.0 << " " << r / 100.0 << std::endl;
+
 
     size_t bufLen = MAVLINK_MAX_PACKET_LEN + sizeof(uint64_t);
     uint8_t buf[bufLen];

@@ -260,6 +260,7 @@ int main(int argc, char const *argv[]){
             ImGui::Begin("Scripts", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
             bool scriptButton = ImGui::Button("Run Script");
             if(scriptButton and scriptButton != lastScriptButton){
+                std::cout << "Here" << std::endl;
                 luaL_dofile(luaState, "helloDrone.lua");
             }
             lastScriptButton = scriptButton;
@@ -273,12 +274,12 @@ int main(int argc, char const *argv[]){
         interface.sendHeartBeat();
 
         if(sf::Joystick::isConnected(0)){
-            float x = sf::Joystick::getAxisPosition(0, sf::Joystick::X) * 10.0;
-            float y = sf::Joystick::getAxisPosition(0, sf::Joystick::Y) * 10.0;
-            float z = -sf::Joystick::getAxisPosition(0, sf::Joystick::V) * 10.0;
-            float r = sf::Joystick::getAxisPosition(0, sf::Joystick::U) * 10.0;
-
-            interface.sendJoystickControl(x, y, z, r);
+//            float x = sf::Joystick::getAxisPosition(0, sf::Joystick::X) * 10.0;
+//            float y = sf::Joystick::getAxisPosition(0, sf::Joystick::Y) * 10.0;
+//            float z = -sf::Joystick::getAxisPosition(0, sf::Joystick::V) * 10.0;
+//            float r = sf::Joystick::getAxisPosition(0, sf::Joystick::U) * 10.0;
+//
+//            interface.sendJoystickControl(x, y, z, r);
         }
 
         window.display();
