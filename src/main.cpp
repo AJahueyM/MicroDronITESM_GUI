@@ -98,11 +98,10 @@ int main(int argc, char const *argv[]){
     LuaMicroDronInterface::setMicroDronInterface(std::shared_ptr<MicroDronInterface>(&interface));
     LuaMicroDronInterface::registerFunctions(luaState);
 
-    luaL_dofile(luaState, "helloDrone.lua");
-
     window.setFramerateLimit(60);
 
     bool lastEstop;
+    bool lastScriptButton{false};
 
     while (window.isOpen()) {
         std::chrono::high_resolution_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
@@ -257,6 +256,14 @@ int main(int argc, char const *argv[]){
                 pidFile.close();
             }
             ImGui::End();
+
+            ImGui::Begin("Scripts", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            bool scriptButton = ImGui::Button("Run Script");
+            if(scriptButton and scriptButton != lastScriptButton){
+                luaL_dofile(luaState, "helloDrone.lua");
+            }
+            lastScriptButton = scriptButton;
+            ImGui::End();
         }
 
         window.clear(sf::Color(94,94,94));
@@ -276,6 +283,8 @@ int main(int argc, char const *argv[]){
 
         window.display();
     }
+
+    free(luaState);
     window.close();
     return 0;
 }

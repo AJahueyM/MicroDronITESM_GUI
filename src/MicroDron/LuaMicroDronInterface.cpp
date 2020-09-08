@@ -25,17 +25,26 @@ void LuaMicroDronInterface::registerFunctions(lua_State *L) {
     lua_register(L, "setRPY", LuaMicroDronInterface::lua_drone_set_rot);
     lua_register(L, "hover", LuaMicroDronInterface::lua_drone_hover);
     lua_register(L, "getHeight", LuaMicroDronInterface::lua_drone_get_height);
+    lua_register(L, "sleepMS", LuaMicroDronInterface::lua_sleep_ms);
+}
+
+int LuaMicroDronInterface::lua_sleep_ms(lua_State *L) {
+    double ms = lua_tonumber(L, 1);
+    std::this_thread::sleep_for(std::chrono::milliseconds((int) ms));
+    return 0;
 }
 
 int LuaMicroDronInterface::lua_drone_takeoff(lua_State *L) {
     double height = lua_tonumber(L, 1);
-    interface->takeoff(height);
+    //interface->takeoff(height);
+    interface->sendJoystickControl(0,0,800,0);
     return 0;
 }
 
 int LuaMicroDronInterface::lua_drone_land(lua_State *L) {
     //interface->land();
     std::cout<<"LAND" <<std::endl;
+    interface->sendJoystickControl(0,0,0,0);
     return 0;
 }
 

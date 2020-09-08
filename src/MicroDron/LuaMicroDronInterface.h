@@ -40,6 +40,8 @@ protected:
 
     static int lua_drone_get_height(lua_State *L);
 
+    static int lua_sleep_ms(lua_State *L);
+
 private:
     LuaMicroDronInterface();
 
