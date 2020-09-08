@@ -9,6 +9,7 @@
 #include <string>
 #include <stdexcept>
 #include <iostream>
+#include <algorithm>
 #include <fmt/format.h>
 
 MicroDronInterfaceUDP::MicroDronInterfaceUDP() {
