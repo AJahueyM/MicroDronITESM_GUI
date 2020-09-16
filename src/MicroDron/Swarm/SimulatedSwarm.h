@@ -25,6 +25,7 @@ enum class DroneType {
     Leader1,
     Leader2,
     Leader3,
+    Leader4,
     Follower,
     Undefined
 };

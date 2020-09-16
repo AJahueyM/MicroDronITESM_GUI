@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.13)
 project(MicroDronITESM_GUI)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 find_package(Lua REQUIRED)
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 file(GLOB_RECURSE MicroDronGUI_SRC
         "src/*.h"
@@ -24,7 +25,7 @@ find_package(SFML 2.4 REQUIRED network audio graphics window system)
 find_package(fmt)
 
 
-link_libraries(${SFML_LIBRARIES} GL pthread atomic ${LUA_LIBRARIES} fmt::fmt)
+link_libraries(${SFML_LIBRARIES} GL pthread atomic ${LUA_LIBRARIES} fmt::fmt Eigen3::Eigen)
 include_directories(src)
 include_directories(libs/MAVLinkV2/common)
 include_directories(libs/UDPLib/include)

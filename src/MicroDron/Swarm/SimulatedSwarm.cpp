@@ -12,8 +12,11 @@ SimulatedSwarm::SimulatedSwarm() {
     drones.emplace_back(DroneData(DroneType::Leader1, pos));
     pos.x += 1;
     drones.emplace_back(DroneData(DroneType::Leader2, pos));
-    pos.z += 1; pos.x -= 0.5;
+    pos.x -= 0.5; pos.y += 1.0;
     drones.emplace_back(DroneData(DroneType::Leader3, pos));
+
+    pos.y -= 0.5; pos.z += 1.0;
+    drones.emplace_back(DroneData(DroneType::Leader4, pos));
 
     pos = DronePos(0, 1, 0);
     addFollowers(3, pos, 1);

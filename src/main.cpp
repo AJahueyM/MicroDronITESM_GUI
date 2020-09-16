@@ -10,6 +10,7 @@
 #include <functional>
 #include "MicroDron/LuaMicroDronInterface.h"
 #include "MicroDron/Swarm/DrawableSwarm.h"
+#include "MicroDron/Swarm/Multilateration.h"
 
 void createPIDConfigMenu(const std::string &name, SimplePID &pid, const std::function<void(const SimplePID &pid)> &setFun, int id){
     ImGui::Text("%s", name.c_str());
@@ -106,7 +107,7 @@ int main(int argc, char const *argv[]){
 
     DrawableSwarm swarm;
     DronePos appliedVelocity;
-    double dir = 1;
+    double xDir = 1; double yDir = 1; double zDir = 1;
 
     while (window.isOpen()) {
         std::chrono::high_resolution_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
@@ -289,10 +290,53 @@ int main(int argc, char const *argv[]){
         }
 
         for(size_t i = 0; i < swarm.drones.size(); ++i){
-            swarm.applyVelocity(i, appliedVelocity, 0.1);
-            appliedVelocity.x += dir * 0.01;
-            if(std::abs(appliedVelocity.x) > 1) dir *= -1.0;
+            if(swarm.drones.at(i).type == DroneType::Follower){
+                swarm.applyVelocity(i, appliedVelocity, 0.05);
+                appliedVelocity.x += xDir * 0.01;
+                appliedVelocity.y += yDir * 0.01;
+                appliedVelocity.z += zDir * 0.01;
+                if(std::abs(appliedVelocity.x) > 2) xDir *= -1.0;
+                if(std::abs(appliedVelocity.y) > 2) yDir *= -1.0;
+                if(std::abs(appliedVelocity.z) > 2) zDir *= -1.0;
+            }
         }
+
+
+
+        //Find first follower and roll with it
+        auto it = std::find_if(swarm.drones.begin(), swarm.drones.end(),
+                               [&] (const DroneData &d) {return d.type == DroneType::Follower;});
+
+        auto id = std::distance(swarm.drones.begin(), it);
+        auto actualPose = it->pos;
+
+        std::vector<ReferenceMeasurement> meas;
+        ReferenceMeasurement m;
+        m.distance = swarm.getDistance(id, DroneType::Leader1);
+        m.referencePosition = Pose3D(0,0,0);
+        meas.emplace_back(m);
+
+        m.distance = swarm.getDistance(id, DroneType::Leader2);
+        m.referencePosition = Pose3D(1, 0, 0);
+        meas.emplace_back(m);
+
+        m.distance = swarm.getDistance(id, DroneType::Leader3);
+        m.referencePosition = Pose3D(0.5, 1.0, 0);
+        meas.emplace_back(m);
+
+        m.distance = swarm.getDistance(id, DroneType::Leader4);
+        m.referencePosition = Pose3D(0.5, 0.5, 1);
+        meas.emplace_back(m);
+
+        auto pose = Multilateration::solveMultilateration(meas);
+        std::cout << fmt::format("DeltaDistance: {}",
+                                 std::sqrt(std::pow(pose.x - actualPose.x, 2.0) +
+                                 std::pow(pose.y - actualPose.y, 2.0) +
+                                 std::pow(pose.z - actualPose.z, 2.0))) << std::endl;
+        //std::cout << fmt::format("MultiPose: {},{},{}", pose.x, pose.y, pose.z) << std::endl;
+        //std::cout << fmt::format("ActualPose: {},{},{}", actualPose.x, actualPose.y, actualPose.z) << std::endl;
+
+        //std::cout << std::endl;
 
         window.display();
     }
