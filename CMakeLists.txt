@@ -30,4 +30,4 @@ include_directories(libs/MAVLinkV2/common)
 include_directories(libs/UDPLib/include)
 include_directories(${LUA_INCLUDE_DIR})
 
-add_executable(MicroDronITESM_GUI  ${MicroDronGUI_SRC})
+add_executable(MicroDronITESM_GUI  ${MicroDronGUI_SRC} src/MicroDron/Swarm/SimulatedSwarm.cpp src/MicroDron/Swarm/SimulatedSwarm.h src/MicroDron/Swarm/DrawableSwarm.cpp src/MicroDron/Swarm/DrawableSwarm.h)

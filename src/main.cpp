@@ -9,6 +9,7 @@
 #include <fstream>
 #include <functional>
 #include "MicroDron/LuaMicroDronInterface.h"
+#include "MicroDron/Swarm/DrawableSwarm.h"
 
 void createPIDConfigMenu(const std::string &name, SimplePID &pid, const std::function<void(const SimplePID &pid)> &setFun, int id){
     ImGui::Text("%s", name.c_str());
@@ -102,6 +103,10 @@ int main(int argc, char const *argv[]){
 
     bool lastEstop;
     bool lastScriptButton{false};
+
+    DrawableSwarm swarm;
+    DronePos appliedVelocity;
+    double dir = 1;
 
     while (window.isOpen()) {
         std::chrono::high_resolution_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
@@ -269,6 +274,7 @@ int main(int argc, char const *argv[]){
 
         window.clear(sf::Color(94,94,94));
 
+        window.draw(swarm);
         ImGui::SFML::Render(window);
 
         interface.sendHeartBeat();
@@ -280,6 +286,12 @@ int main(int argc, char const *argv[]){
 //            float r = sf::Joystick::getAxisPosition(0, sf::Joystick::U) * 10.0;
 //
 //            interface.sendJoystickControl(x, y, z, r);
+        }
+
+        for(size_t i = 0; i < swarm.drones.size(); ++i){
+            swarm.applyVelocity(i, appliedVelocity, 0.1);
+            appliedVelocity.x += dir * 0.01;
+            if(std::abs(appliedVelocity.x) > 1) dir *= -1.0;
         }
 
         window.display();
