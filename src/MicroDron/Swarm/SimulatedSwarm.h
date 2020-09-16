@@ -48,6 +48,9 @@ public:
     SimulatedSwarm();
 
     [[nodiscard]] double getDistance(size_t id1, size_t id2) const;
+    [[nodiscard]] double getDistance(size_t id, DroneType type) const;
+
+    [[nodiscard]] DronePos getTriangulatedDistance(size_t id) const;
 
     void applyVelocities(const std::vector<DronePos> &velocities, double dt);
     void applyVelocity(size_t id, const DronePos &velocity, double dt);
