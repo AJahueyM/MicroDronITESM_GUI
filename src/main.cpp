@@ -11,6 +11,7 @@
 #include "MicroDron/LuaMicroDronInterface.h"
 #include "MicroDron/Swarm/DrawableSwarm.h"
 #include "MicroDron/Swarm/Multilateration.h"
+#include "MicroDron/SwarmUDPInterface.h"
 
 void createPIDConfigMenu(const std::string &name, SimplePID &pid, const std::function<void(const SimplePID &pid)> &setFun, int id){
     ImGui::Text("%s", name.c_str());
@@ -37,7 +38,8 @@ void createPIDStatus(const std::string &name, const SimplePID &pid){
 int main(int argc, char const *argv[]){
     ///Create interface to drone
 
-    MicroDronInterfaceUDP interface;
+    //MicroDronInterfaceUDP interface;
+    SwarmUDPInterface interface(6);
     //MicroDronInterfaceOLD interface("127.0.0.1", 51717);
     sf::RenderWindow window(sf::VideoMode(static_cast<unsigned int>(1920 * .45),
                                           static_cast<unsigned int>(1080 * .75)), "MicroDron GUI", sf::Style::Close);
@@ -275,21 +277,21 @@ int main(int argc, char const *argv[]){
 
         window.clear(sf::Color(94,94,94));
 
-        window.draw(swarm);
+        //window.draw(swarm);
         ImGui::SFML::Render(window);
 
         interface.sendHeartBeat();
 
         if(sf::Joystick::isConnected(0)){
-//            float x = sf::Joystick::getAxisPosition(0, sf::Joystick::X) * 10.0;
-//            float y = sf::Joystick::getAxisPosition(0, sf::Joystick::Y) * 10.0;
-//            float z = -sf::Joystick::getAxisPosition(0, sf::Joystick::V) * 10.0;
-//            float r = sf::Joystick::getAxisPosition(0, sf::Joystick::U) * 10.0;
+            float x = sf::Joystick::getAxisPosition(0, sf::Joystick::X) * 10.0;
+            float y = sf::Joystick::getAxisPosition(0, sf::Joystick::Y) * 10.0;
+            float z = -sf::Joystick::getAxisPosition(0, sf::Joystick::V) * 10.0;
+            float r = sf::Joystick::getAxisPosition(0, sf::Joystick::U) * 10.0;
 //
-//            interface.sendJoystickControl(x, y, z, r);
+            interface.sendJoystickControl(x, y, z, r);
         }
 
-        for(size_t i = 0; i < swarm.drones.size(); ++i){
+        /*for(size_t i = 0; i < swarm.drones.size(); ++i){
             if(swarm.drones.at(i).type == DroneType::Follower){
                 swarm.applyVelocity(i, appliedVelocity, 0.05);
                 appliedVelocity.x += xDir * 0.01;
@@ -327,12 +329,12 @@ int main(int argc, char const *argv[]){
         m.distance = swarm.getDistance(id, DroneType::Leader4);
         m.referencePosition = Pose3D(0.5, 0.5, 1);
         meas.emplace_back(m);
-
-        auto pose = Multilateration::solveMultilateration(meas);
-        std::cout << fmt::format("DeltaDistance: {}",
+*/
+        //auto pose = Multilateration::solveMultilateration(meas);
+        /*std::cout << fmt::format("DeltaDistance: {}",
                                  std::sqrt(std::pow(pose.x - actualPose.x, 2.0) +
                                  std::pow(pose.y - actualPose.y, 2.0) +
-                                 std::pow(pose.z - actualPose.z, 2.0))) << std::endl;
+                                 std::pow(pose.z - actualPose.z, 2.0))) << std::endl;*/
         //std::cout << fmt::format("MultiPose: {},{},{}", pose.x, pose.y, pose.z) << std::endl;
         //std::cout << fmt::format("ActualPose: {},{},{}", actualPose.x, actualPose.y, actualPose.z) << std::endl;
 

@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <fmt/format.h>
 
-MicroDronInterfaceUDP::MicroDronInterfaceUDP() {
+MicroDronInterfaceUDP::MicroDronInterfaceUDP(uint16_t sendPort, uint16_t recvPort){
     mavlink_attitude_t initialAttitude;
     initialAttitude.yaw = 0;
     initialAttitude.pitch = 0;
@@ -20,7 +20,7 @@ MicroDronInterfaceUDP::MicroDronInterfaceUDP() {
     attitude.store(initialAttitude);
 
     std::string addr("127.0.0.1");
-    int ret = udp_conn_open_ip(&conn, addr.c_str(), 14551, 14550);
+    int ret = udp_conn_open_ip(&conn, addr.c_str(), sendPort, recvPort);
 
     if (ret < 0) {
         perror("UDP conn open failed");

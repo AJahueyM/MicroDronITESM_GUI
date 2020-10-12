@@ -1,29 +1,17 @@
 //
-// Created by abiel on 8/19/20.
+// Created by abiel on 10/6/20.
 //
 
-#ifndef MICRODRONITESM_GUI_MICRODRONINTERFACEUDP_H
-#define MICRODRONITESM_GUI_MICRODRONINTERFACEUDP_H
+#ifndef MICRODRONITESM_GUI_SWARMUDPINTERFACE_H
+#define MICRODRONITESM_GUI_SWARMUDPINTERFACE_H
 
 #include "MicroDronInterface.h"
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <cstdlib>
-#include <fcntl.h>
-#include <arpa/inet.h>
-#include <cstring>
-#include <thread>
-#include "mavlink.h"
-#include <atomic>
+#include "MicroDronInterfaceUDP.h"
+#include <vector>
 
-extern "C"{
-#include <UDP.h>
-};
-
-class MicroDronInterfaceUDP : public MicroDronInterface {
+class SwarmUDPInterface : public MicroDronInterface {
 public:
-    MicroDronInterfaceUDP(uint16_t sendPort = 14551, uint16_t recvPort = 14550);
+    SwarmUDPInterface(size_t n, uint16_t sendPort = 14551, uint16_t recvPort = 14550);
 
     SimplePID getPitchPid() const override;
 
@@ -69,8 +57,6 @@ public:
 
     void setSetpoints(float roll, float pitch, float yaw, float height) override;
 
-    void sendJoystickControl(int16_t x, int16_t y, int16_t z, int16_t r) override;
-
     void setK(float newK) override;
 
     void emergencyStop() override;
@@ -81,21 +67,13 @@ public:
 
     float getHeartbeatTime() const override;
 
-    ~MicroDronInterfaceUDP();
+    void sendJoystickControl(int16_t x, int16_t y, int16_t z, int16_t r) override;
+
+    void takeoff(double height) override;
+
 private:
-    void update();
-    bool emergencyStopped{false};
-    const uint16_t gs_port = 14550;
-    struct sockaddr_in gs_server{}, gs_client{}; //Local IP addr
-    std::atomic<mavlink_attitude_t> attitude{};
-    std::atomic<mavlink_distance_sensor_t> distanceSensor{};
-    udp_conn_data conn;
-
-    std::chrono::high_resolution_clock::time_point lastHb;
-
-    std::thread updateThread;
-    bool isRunning = true;
+    std::vector<std::unique_ptr<MicroDronInterfaceUDP>> drones;
 };
 
 
-#endif //MICRODRONITESM_GUI_MICRODRONINTERFACEUDP_H
+#endif //MICRODRONITESM_GUI_SWARMUDPINTERFACE_H

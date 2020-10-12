@@ -52,18 +52,6 @@ double SimulatedSwarm::getDistance(size_t id, DroneType type) const {
     return getDistance(id, std::distance(drones.begin(), it));
 }
 
-DronePos SimulatedSwarm::getTriangulatedDistance(size_t id) const {
-    auto drone = drones.at(id);
-    if(drone.type != DroneType::Follower)
-        throw std::runtime_error("This drone is not a follower");
-
-    auto d1 = getDistance(id, DroneType::Leader1);
-    auto d2 = getDistance(id, DroneType::Leader2);
-    auto d3 = getDistance(id, DroneType::Leader3);
-
-
-}
-
 void SimulatedSwarm::applyVelocities(const std::vector<DronePos> &velocities, double dt) {
     if(velocities.size() != drones.size()){
         throw std::runtime_error("Not enough velocities given");
