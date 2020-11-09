@@ -19,7 +19,7 @@ MicroDronInterfaceUDP::MicroDronInterfaceUDP() {
     initialAttitude.roll = 0;
     attitude.store(initialAttitude);
 
-    std::string addr("127.0.0.1");
+    std::string addr("192.168.1.17");
     int ret = udp_conn_open_ip(&conn, addr.c_str(), 14551, 14550);
 
     if (ret < 0) {
@@ -36,6 +36,7 @@ MicroDronInterfaceUDP::MicroDronInterfaceUDP() {
 //    }
     lastHb = std::chrono::high_resolution_clock::now();
     updateThread = std::thread(&MicroDronInterfaceUDP::update, this);
+    hbThread = std::thread(&MicroDronInterfaceUDP::hbUpdate, this);
 }
 
 void MicroDronInterfaceUDP::setPitchPid(SimplePID pitchPid) {
@@ -55,7 +56,15 @@ void MicroDronInterfaceUDP::setHeightPid(SimplePID heightPid) {
 }
 
 void MicroDronInterfaceUDP::sendHeartBeat() {
+    //Send hb to drone
+    mavlink_message_t msg;
+    mavlink_msg_heartbeat_pack(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, MAV_COMP_ID_AUTOPILOT1,0,0,0,isEmergencyStopped() ? MAV_STATE_EMERGENCY : 0);
 
+    size_t bufLen = MAVLINK_MAX_PACKET_LEN + sizeof(uint64_t);
+    uint8_t buf[bufLen];
+    auto size = mavlink_msg_to_send_buffer(buf, &msg);
+
+    udp_conn_send(&conn, buf, size);
 }
 
 float MicroDronInterfaceUDP::getPitch() const {
@@ -114,10 +123,10 @@ void MicroDronInterfaceUDP::setK(float newK) {
 
 }
 
-void MicroDronInterfaceUDP::emergencyStop() {
-    emergencyStopped = !emergencyStopped;
+void MicroDronInterfaceUDP::emergencyStop(bool state) {
+    emergencyStopped = state;
     if (emergencyStopped) {
-        std::cout << "Estopped" << std::endl;
+        std::cout << "E-stopped" << std::endl;
     }
 }
 
@@ -149,16 +158,20 @@ SimplePID MicroDronInterfaceUDP::getHeightPid() const {
     return SimplePID();
 }
 
+//Yaw = R
+//Pitch = Y
+//Roll = X
+//Height = Z
 void MicroDronInterfaceUDP::sendJoystickControl(int16_t x, int16_t y, int16_t z, int16_t r) {
     const int16_t maxVal = 1000;
     const int16_t minVal = -1000;
+
+    //std::cout << fmt::format("Roll: {}, Pitch: {}, Yaw: {}, Thrust: {}", x, y, r, z) << std::endl;
+
     mavlink_message_t msg;
     mavlink_msg_manual_control_pack(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, MAV_COMP_ID_AUTOPILOT1,
                                     x, y,
                                     z, r,0);
-
-    std::cout << r / 100.0 << " " << z / 100.0 << " " << y  / 100.0 << " " << r / 100.0 << std::endl;
-
 
     size_t bufLen = MAVLINK_MAX_PACKET_LEN + sizeof(uint64_t);
     uint8_t buf[bufLen];
@@ -201,6 +214,13 @@ void MicroDronInterfaceUDP::update() {
             }
         }
 
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+}
+
+void MicroDronInterfaceUDP::hbUpdate() {
+    while (isRunning) {
+        sendHeartBeat();
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 }

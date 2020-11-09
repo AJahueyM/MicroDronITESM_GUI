@@ -52,7 +52,7 @@ int LuaMicroDronInterface::lua_drone_land(lua_State *L) {
 }
 
 int LuaMicroDronInterface::lua_drone_estop(lua_State *L) {
-    interface->emergencyStop();
+    interface->emergencyStop(true);
     return 0;
 }
 

@@ -9,6 +9,9 @@
 #include <fstream>
 #include <functional>
 #include "MicroDron/LuaMicroDronInterface.h"
+#include "Utils/SFMLController.h"
+
+using namespace std::placeholders;
 
 void createPIDConfigMenu(const std::string &name, SimplePID &pid, const std::function<void(const SimplePID &pid)> &setFun, int id){
     ImGui::Text("%s", name.c_str());
@@ -32,9 +35,19 @@ void createPIDStatus(const std::string &name, const SimplePID &pid){
     ImGui::Text("%s:   P: %.3f, I: %.3f, D: %.3f", name.c_str(), pid.p, pid.i, pid.d);
 }
 
-int main(int argc, char const *argv[]){
-    ///Create interface to drone
+SFMLControllerConfig tarranisConfig;
+std::unique_ptr<SFMLController> controller;
 
+int main(int argc, char const *argv[]){
+    tarranisConfig.thrustAxis = sf::Joystick::X;
+    tarranisConfig.rollAxis = sf::Joystick::Y;
+    tarranisConfig.pitchAxis = sf::Joystick::Z;
+    tarranisConfig.yawAxis = sf::Joystick::U;
+
+    //TODO Implement support for various controllers
+    controller = std::make_unique<SFMLController>(tarranisConfig);
+
+    ///Create interface to drone
     MicroDronInterfaceUDP interface;
     //MicroDronInterfaceOLD interface("127.0.0.1", 51717);
     sf::RenderWindow window(sf::VideoMode(static_cast<unsigned int>(1920 * .45),
@@ -124,9 +137,9 @@ int main(int argc, char const *argv[]){
             ImGui::SFML::Update(window, deltaClock.restart());
             ImGui::Begin("Drone State", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
             ImGui::RadioButton(interface.isConnected() ? "Connected" : "Disconnected", interface.isConnected());
-            ImGui::PlotVar("Pitch", interface.getPitch(), -90, 90);
-            ImGui::PlotVar("Roll", interface.getRoll(), -90, 90);
-            ImGui::PlotVar("Yaw", interface.getYaw(), -90, 90);
+            ImGui::PlotVar("Pitch", interface.getPitch(), -180, 180);
+            ImGui::PlotVar("Roll", interface.getRoll(), -180, 180);
+            ImGui::PlotVar("Yaw", interface.getYaw(), -180, 180);
             ImGui::PlotVar("Height", interface.getHeight(), -5, 5);
             ImGui::PlotVar("Drone heartbeat", interface.getHeartbeatTime(), 0, 100);
 
@@ -140,7 +153,7 @@ int main(int argc, char const *argv[]){
 
             bool eStopKey = sf::Keyboard::isKeyPressed(sf::Keyboard::F);
             if(eStopKey and eStopKey != lastEstop){
-                interface.emergencyStop();
+                interface.emergencyStop(!interface.isEmergencyStopped());
             }
             lastEstop = eStopKey;
 
@@ -149,7 +162,7 @@ int main(int argc, char const *argv[]){
 
             ImGui::Begin("Drone Control", nullptr,ImGuiWindowFlags_AlwaysAutoResize);
             if(ImGui::Button("Emergency Stop")){
-                interface.emergencyStop();
+                interface.emergencyStop(!interface.isEmergencyStopped());
             }
 
             ImGui::SameLine();
@@ -274,12 +287,7 @@ int main(int argc, char const *argv[]){
         interface.sendHeartBeat();
 
         if(sf::Joystick::isConnected(0)){
-//            float x = sf::Joystick::getAxisPosition(0, sf::Joystick::X) * 10.0;
-//            float y = sf::Joystick::getAxisPosition(0, sf::Joystick::Y) * 10.0;
-//            float z = -sf::Joystick::getAxisPosition(0, sf::Joystick::V) * 10.0;
-//            float r = sf::Joystick::getAxisPosition(0, sf::Joystick::U) * 10.0;
-//
-//            interface.sendJoystickControl(x, y, z, r);
+            controller->sendControl(std::bind(&MicroDronInterface::sendJoystickControl, &interface, _1, _2, _3, _4));
         }
 
         window.display();

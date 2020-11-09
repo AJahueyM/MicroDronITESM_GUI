@@ -73,7 +73,7 @@ public:
 
     void setK(float newK) override;
 
-    void emergencyStop() override;
+    void emergencyStop(bool state) override;
 
     bool isEmergencyStopped() const override;
 
@@ -84,6 +84,7 @@ public:
     ~MicroDronInterfaceUDP();
 private:
     void update();
+    void hbUpdate();
     bool emergencyStopped{false};
     const uint16_t gs_port = 14550;
     struct sockaddr_in gs_server{}, gs_client{}; //Local IP addr
@@ -93,7 +94,7 @@ private:
 
     std::chrono::high_resolution_clock::time_point lastHb;
 
-    std::thread updateThread;
+    std::thread updateThread, hbThread;
     bool isRunning = true;
 };
 

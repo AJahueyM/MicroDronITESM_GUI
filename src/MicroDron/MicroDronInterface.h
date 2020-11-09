@@ -171,7 +171,7 @@ public:
     /**
      * Immediately send command to stop all motors
      */
-    virtual void emergencyStop() = 0;
+    virtual void emergencyStop(bool state) = 0;
 
     virtual bool isEmergencyStopped() const = 0;
 
