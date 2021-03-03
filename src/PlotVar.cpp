@@ -1,11 +1,13 @@
 #include <map>
-#include "imgui.h"
+#include <imgui.h>
+#include <vector>
+#include <cmath>
 #include "PlotVar.h"
 
 struct PlotVarData
 {
     ImGuiID        ID;
-    ImVector<float>  Data;
+    std::vector<float>  Data;
     int            DataInsertIdx;
     int            LastFrame;
 

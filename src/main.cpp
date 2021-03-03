@@ -2,9 +2,9 @@
 #include <iostream>
 #include "MicroDron/MicroDronInterfaceUDP.h"
 #include "SFML/Graphics.hpp"
-#include "imgui/imgui-SFML.h"
-#include "imgui/imgui.h"
-#include "imgui/PlotVar.h"
+#include "imgui-SFML.h"
+#include "imgui.h"
+#include "PlotVar.h"
 #include <chrono>
 #include <fstream>
 #include <functional>
@@ -159,6 +159,14 @@ int main(int argc, char const *argv[]){
 
             ImGui::Text("Current mode %i", interface.getMode());
             ImGui::End();
+
+            ImGui::Begin("Parameters", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            if(ImGui::Button("Request Parameters")){
+                //
+            }
+            ImGui::End();
+
+            ImGui::ShowDemoWindow();
 
             ImGui::Begin("Drone Control", nullptr,ImGuiWindowFlags_AlwaysAutoResize);
             if(ImGui::Button("Emergency Stop")){

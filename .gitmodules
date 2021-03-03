@@ -4,3 +4,9 @@
 [submodule "libs/UDPLib"]
 	path = libs/UDPLib
 	url = https://github.com/microdron-itesm/UDPLib.git
+[submodule "libs/imgui-sfml"]
+	path = libs/imgui-sfml
+	url = https://github.com/eliasdaler/imgui-sfml.git
+[submodule "libs/imgui"]
+	path = libs/imgui
+	url = https://github.com/ocornut/imgui.git
