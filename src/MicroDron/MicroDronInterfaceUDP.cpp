@@ -19,7 +19,7 @@ MicroDronInterfaceUDP::MicroDronInterfaceUDP() {
     initialAttitude.roll = 0;
     attitude.store(initialAttitude);
 
-    std::string addr("192.168.1.17");
+    std::string addr("192.168.1.46");
     int ret = udp_conn_open_ip(&conn, addr.c_str(), 14551, 14550);
 
     if (ret < 0) {
@@ -166,7 +166,7 @@ void MicroDronInterfaceUDP::sendJoystickControl(int16_t x, int16_t y, int16_t z,
     const int16_t maxVal = 1000;
     const int16_t minVal = -1000;
 
-    //std::cout << fmt::format("Roll: {}, Pitch: {}, Yaw: {}, Thrust: {}", x, y, r, z) << std::endl;
+    std::cout << fmt::format("Roll: {}, Pitch: {}, Yaw: {}, Thrust: {}", x, y, r, z) << std::endl;
 
     mavlink_message_t msg;
     mavlink_msg_manual_control_pack(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, MAV_COMP_ID_AUTOPILOT1,
@@ -214,14 +214,14 @@ void MicroDronInterfaceUDP::update() {
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
 void MicroDronInterfaceUDP::hbUpdate() {
     while (isRunning) {
         sendHeartBeat();
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
 
