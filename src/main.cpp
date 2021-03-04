@@ -164,6 +164,10 @@ int main(int argc, char const *argv[]){
             if(ImGui::Button("Request Parameters")){
                 //
             }
+
+            if(ImGui::TreeNode("Parameters")){
+                ImGui::TreePop();
+            }
             ImGui::End();
 
             ImGui::ShowDemoWindow();

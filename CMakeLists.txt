@@ -19,14 +19,12 @@ file(GLOB_RECURSE MicroDronGUI_SRC
         "libs/UDPLib/*.c"
         )
 
-list(APPEND CMAKE_MODULE_PATH "/usr/share/SFML/cmake/Modules")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-find_package(SFML 2.4 REQUIRED network audio graphics window system)
+find_package(SFML 2 REQUIRED network audio graphics window system)
 set(IMGUI_SFML_FIND_SFML OFF)
 set(IMGUI_SFML_BUILD_EXAMPLES OFF)
 set(IMGUI_SFML_IMGUI_DEMO ON)
-#set(ImGui-SFML_DIR "${CMAKE_CURRENT_LIST_DIR}/libs/imgui-sfml/cmake/")
-#message(${ImGui-SFML_DIR})
 set(IMGUI_DIR "${CMAKE_CURRENT_LIST_DIR}/libs/imgui" [PARENT_SCOPE])
 
 add_subdirectory(libs/imgui-sfml EXCLUDE_FROM_ALL)
