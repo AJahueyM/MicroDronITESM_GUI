@@ -21,7 +21,7 @@ file(GLOB_RECURSE MicroDronGUI_SRC
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-find_package(SFML 2.5 REQUIRED network audio graphics window system)
+find_package(SFML 2.4 REQUIRED network audio graphics window system)
 set(IMGUI_SFML_FIND_SFML OFF)
 set(IMGUI_SFML_BUILD_EXAMPLES OFF)
 set(IMGUI_SFML_IMGUI_DEMO ON)
