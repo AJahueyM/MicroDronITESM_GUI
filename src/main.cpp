@@ -125,6 +125,7 @@ void drawParamWindow(MicroDronInterfaceUDP &interface){
 void drawIMUPlots(MicroDronInterfaceUDP &interface){
     ImGui::Begin("Measurements", nullptr, 0);
     static RollingBuffer rollBuf, pitchBuf, yawBuf;
+    static RollingBuffer m0, m1, m2, m3;
     const static std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
 
     static ImPlotAxisFlags rt_axis = ImPlotFlags_AntiAliased;
@@ -139,10 +140,29 @@ void drawIMUPlots(MicroDronInterfaceUDP &interface){
 
     ImPlot::SetNextPlotLimitsX(tDelta - history,tDelta, ImGuiCond_Always);
     ImPlot::SetNextPlotLimitsY(-180, 180, ImGuiCond_Always);
-    if(ImPlot::BeginPlot("IMU (Degrees)", NULL, NULL, ImVec2(-1, -1), 0, rt_axis, rt_axis)){
+    if(ImPlot::BeginPlot("IMU (Degrees)", NULL, NULL, ImVec2(-1, 250), 0, rt_axis, rt_axis)){
         ImPlot::PlotLine("Roll", &rollBuf.Data[0].x, &rollBuf.Data[0].y, rollBuf.Data.size(), 0, 2 * sizeof(float));
         ImPlot::PlotLine("Pitch", &pitchBuf.Data[0].x, &pitchBuf.Data[0].y, pitchBuf.Data.size(), 0, 2 * sizeof(float));
         ImPlot::PlotLine("Yaw", &yawBuf.Data[0].x, &yawBuf.Data[0].y, yawBuf.Data.size(), 0, 2 * sizeof(float));
+        ImPlot::EndPlot();
+    }
+
+    duration = interface.getLastMotorUpdate() - t;
+    tDelta = duration.count();
+    auto motorValues = interface.getMotorValues();
+    m0.AddPoint(tDelta, motorValues.frontLeft);
+    m1.AddPoint(tDelta, motorValues.frontRight);
+    m2.AddPoint(tDelta, motorValues.backLeft);
+    m3.AddPoint(tDelta, motorValues.backRight);
+
+    ImPlot::SetNextPlotLimitsX(tDelta - history,tDelta, ImGuiCond_Always);
+    ImPlot::SetNextPlotLimitsY(-10, 1000, ImGuiCond_Always);
+
+    if(ImPlot::BeginPlot("Motor Outputs", NULL, NULL, ImVec2(-1, 250), 0, rt_axis, rt_axis)){
+        ImPlot::PlotLine("Front Left", &m0.Data[0].x, &m0.Data[0].y, m0.Data.size(), 0, 2 * sizeof(float));
+        ImPlot::PlotLine("Front Right", &m1.Data[0].x, &m1.Data[0].y, m1.Data.size(), 0, 2 * sizeof(float));
+        ImPlot::PlotLine("Back Left", &m2.Data[0].x, &m2.Data[0].y, m2.Data.size(), 0, 2 * sizeof(float));
+        ImPlot::PlotLine("Back Right", &m3.Data[0].x, &m3.Data[0].y, m3.Data.size(), 0, 2 * sizeof(float));
         ImPlot::EndPlot();
     }
 

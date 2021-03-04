@@ -237,6 +237,17 @@ void MicroDronInterfaceUDP::update() {
                             paramList[param.param_index] = param;
                             std::cout << fmt::format("Got param: {} i: {}", param.param_id, param.param_index) << std::endl;
                             break;
+                        case MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY:
+                            mavlink_debug_float_array_t floatArr;
+                            mavlink_msg_debug_float_array_decode(&msg, &floatArr);
+                            if(floatArr.array_id == 0){
+                                lastMotorUpdateTime = std::chrono::high_resolution_clock::now();
+                                motorValues.frontLeft = floatArr.data[0];
+                                motorValues.frontRight = floatArr.data[1];
+                                motorValues.backLeft = floatArr.data[2];
+                                motorValues.backRight = floatArr.data[3];
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -248,6 +259,10 @@ void MicroDronInterfaceUDP::update() {
     }
 }
 
+MotorValues MicroDronInterfaceUDP::getMotorValues() const {
+    return motorValues;
+}
+
 void MicroDronInterfaceUDP::hbUpdate() {
     while (isRunning) {
         sendHeartBeat();
@@ -257,6 +272,10 @@ void MicroDronInterfaceUDP::hbUpdate() {
 
 std::chrono::high_resolution_clock::time_point MicroDronInterfaceUDP::getLastAttUpdateTime() const {
     return lastAttUpdateTime;
+}
+
+std::chrono::high_resolution_clock::time_point MicroDronInterfaceUDP::getLastMotorUpdate() const {
+    return lastMotorUpdateTime;
 }
 
 MicroDronInterfaceUDP::~MicroDronInterfaceUDP() {

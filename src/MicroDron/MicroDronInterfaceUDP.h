@@ -18,6 +18,11 @@
 #include <atomic>
 #include <map>
 
+struct MotorValues{
+    float frontLeft, frontRight;
+    float backLeft, backRight;
+};
+
 extern "C"{
 #include <UDP.h>
 };
@@ -84,6 +89,10 @@ public:
 
     float getHeartbeatTime() const override;
 
+    MotorValues getMotorValues() const;
+
+    std::chrono::high_resolution_clock::time_point getLastMotorUpdate() const;
+
     void requestParamList();
 
     std::map<int, mavlink_param_value_t>& getParams();
@@ -110,6 +119,9 @@ private:
 
     std::thread updateThread, hbThread;
     bool isRunning = true;
+
+    MotorValues motorValues;
+    std::chrono::high_resolution_clock::time_point lastMotorUpdateTime;
 
     std::chrono::high_resolution_clock::time_point lastAttUpdateTime;
 };
