@@ -126,7 +126,7 @@ void MicroDronInterfaceUDP::setK(float newK) {
 void MicroDronInterfaceUDP::emergencyStop(bool state) {
     emergencyStopped = state;
     if (emergencyStopped) {
-        std::cout << "E-stopped" << std::endl;
+        //std::cout << "E-stopped" << std::endl;
     }
 }
 
@@ -156,6 +156,22 @@ SimplePID MicroDronInterfaceUDP::getYawPid() const {
 
 SimplePID MicroDronInterfaceUDP::getHeightPid() const {
     return SimplePID();
+}
+
+void MicroDronInterfaceUDP::sendMessage(const mavlink_message_t &msg) {
+    static uint8_t buffer[4096];
+    auto size = mavlink_msg_to_send_buffer(buffer, &msg);
+    udp_conn_send(&conn, buffer, size);
+}
+
+void MicroDronInterfaceUDP::requestParamList() {
+    mavlink_message_t msg;
+    mavlink_msg_param_request_list_pack(201, 2, &msg,0,0);
+    sendMessage(msg);
+}
+
+std::map<int, mavlink_param_value_t> & MicroDronInterfaceUDP::getParams() {
+    return paramList;
 }
 
 //Yaw = R
@@ -207,6 +223,13 @@ void MicroDronInterfaceUDP::update() {
                         case MAVLINK_MSG_ID_HEARTBEAT:
                             lastHb = std::chrono::high_resolution_clock::now();
                             break;
+                        case MAVLINK_MSG_ID_PARAM_VALUE:
+                            mavlink_param_value_t param;
+                            mavlink_msg_param_value_decode(&msg, &param);
+
+                            paramList[param.param_index] = param;
+                            std::cout << fmt::format("Got param: {} i: {}", param.param_id, param.param_index) << std::endl;
+                            break;
                         default:
                             break;
                     }
@@ -221,7 +244,7 @@ void MicroDronInterfaceUDP::update() {
 void MicroDronInterfaceUDP::hbUpdate() {
     while (isRunning) {
         sendHeartBeat();
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
 

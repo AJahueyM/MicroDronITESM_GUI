@@ -38,6 +38,8 @@ void createPIDStatus(const std::string &name, const SimplePID &pid){
 SFMLControllerConfig tarranisConfig;
 std::unique_ptr<SFMLController> controller;
 
+std::map<int, bool> paramsToSend;
+
 int main(int argc, char const *argv[]){
     tarranisConfig.thrustAxis = sf::Joystick::X;
     tarranisConfig.rollAxis = sf::Joystick::Y;
@@ -160,12 +162,43 @@ int main(int argc, char const *argv[]){
             ImGui::Text("Current mode %i", interface.getMode());
             ImGui::End();
 
-            ImGui::Begin("Parameters", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Begin("Parameters", nullptr, 0);
             if(ImGui::Button("Request Parameters")){
-                //
+                interface.requestParamList();
             }
 
             if(ImGui::TreeNode("Parameters")){
+                ImGuiTableFlags flags = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable;
+
+                if(ImGui::Button("Send Parameters")){
+                    //
+                }
+
+                if(ImGui::BeginTable("Parameters", 4, flags)){
+                    ImGui::TableSetupColumn("Send on click", ImGuiTableColumnFlags_WidthFixed);
+                    ImGui::TableSetupColumn("Index", ImGuiTableColumnFlags_WidthFixed);
+                    ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableHeadersRow();
+
+                    auto &params = interface.getParams();
+                    int row = 0;
+                    for(auto &param : params){
+                        ImGui::TableNextRow();
+                        int col = 0;
+                        ImGui::TableSetColumnIndex(col++);
+                        ImGui::Checkbox("",&(paramsToSend[param.first]));
+                        ImGui::TableSetColumnIndex(col++);
+                        ImGui::Text("%d", param.second.param_index);
+                        ImGui::TableSetColumnIndex(col++);
+                        ImGui::Text("%s", param.second.param_id);
+                        ImGui::TableSetColumnIndex(col++);
+
+                        //Needs to have a label for some reason, otherwise, checkbox does not work
+                        ImGui::InputFloat(" ", &param.second.param_value, 0.1f, 0.0f, "%.5f");
+                    }
+                    ImGui::EndTable();
+                }
                 ImGui::TreePop();
             }
             ImGui::End();
@@ -295,8 +328,6 @@ int main(int argc, char const *argv[]){
         window.clear(sf::Color(94,94,94));
 
         ImGui::SFML::Render(window);
-
-        interface.sendHeartBeat();
 
         if(sf::Joystick::isConnected(0)){
             controller->sendControl(std::bind(&MicroDronInterface::sendJoystickControl, &interface, _1, _2, _3, _4));

@@ -16,6 +16,7 @@
 #include <thread>
 #include "mavlink.h"
 #include <atomic>
+#include <map>
 
 extern "C"{
 #include <UDP.h>
@@ -81,10 +82,17 @@ public:
 
     float getHeartbeatTime() const override;
 
+    void requestParamList();
+
+    std::map<int, mavlink_param_value_t>& getParams();
+
     ~MicroDronInterfaceUDP();
 private:
     void update();
     void hbUpdate();
+
+    void sendMessage(const mavlink_message_t &msg);
+
     bool emergencyStopped{false};
     const uint16_t gs_port = 14550;
     struct sockaddr_in gs_server{}, gs_client{}; //Local IP addr
@@ -93,6 +101,8 @@ private:
     udp_conn_data conn;
 
     std::chrono::high_resolution_clock::time_point lastHb;
+
+    std::map<int, mavlink_param_value_t> paramList;
 
     std::thread updateThread, hbThread;
     bool isRunning = true;
