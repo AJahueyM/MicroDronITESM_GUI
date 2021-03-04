@@ -221,6 +221,7 @@ void MicroDronInterfaceUDP::update() {
                         case MAVLINK_MSG_ID_ATTITUDE:
                             mavlink_msg_attitude_decode(&msg, &new_attitude);
                             attitude = new_attitude;
+                            lastAttUpdateTime = std::chrono::high_resolution_clock::now();
                             break;
                         case MAVLINK_MSG_ID_DISTANCE_SENSOR:
                             mavlink_msg_distance_sensor_decode(&msg, &new_distanceSensor);
@@ -252,6 +253,10 @@ void MicroDronInterfaceUDP::hbUpdate() {
         sendHeartBeat();
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
+}
+
+std::chrono::high_resolution_clock::time_point MicroDronInterfaceUDP::getLastAttUpdateTime() const {
+    return lastAttUpdateTime;
 }
 
 MicroDronInterfaceUDP::~MicroDronInterfaceUDP() {

@@ -44,6 +44,8 @@ public:
 
     void sendHeartBeat() override;
 
+    std::chrono::high_resolution_clock::time_point getLastAttUpdateTime() const;
+
     float getPitch() const override;
 
     float getRoll() const override;
@@ -108,6 +110,8 @@ private:
 
     std::thread updateThread, hbThread;
     bool isRunning = true;
+
+    std::chrono::high_resolution_clock::time_point lastAttUpdateTime;
 };
 
 

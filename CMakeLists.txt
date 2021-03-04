@@ -17,6 +17,8 @@ file(GLOB_RECURSE MicroDronGUI_SRC
         "libs/MAVLinkV2/*.h"
         "libs/UDPLib/*.h"
         "libs/UDPLib/*.c"
+        "libs/implot/*.cpp"
+        "libs/implot/*.h"
         )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -38,6 +40,7 @@ include_directories(src)
 include_directories(libs/MAVLinkV2/common)
 include_directories(libs/UDPLib/include)
 include_directories(${LUA_INCLUDE_DIR})
+include_directories(libs/implot)
 
 add_executable(MicroDronITESM_GUI  ${MicroDronGUI_SRC})
 #target_link_libraries(MicroDronITESM_GUI )

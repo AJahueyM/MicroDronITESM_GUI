@@ -10,8 +10,25 @@
 #include <functional>
 #include "MicroDron/LuaMicroDronInterface.h"
 #include "Utils/SFMLController.h"
+#include "implot.h"
 
 using namespace std::placeholders;
+
+// utility structure for realtime plot
+struct RollingBuffer {
+    float Span;
+    ImVector<ImVec2> Data;
+    RollingBuffer() {
+        Span = 100.0f;
+        Data.reserve(30000);
+    }
+    void AddPoint(float x, float y) {
+        float xmod = fmodf(x, Span);
+        if (!Data.empty() && xmod < Data.back().x)
+            Data.shrink(0);
+        Data.push_back(ImVec2(xmod, y));
+    }
+};
 
 void createPIDConfigMenu(const std::string &name, SimplePID &pid, const std::function<void(const SimplePID &pid)> &setFun, int id){
     ImGui::Text("%s", name.c_str());
@@ -105,6 +122,33 @@ void drawParamWindow(MicroDronInterfaceUDP &interface){
     ImGui::End();
 }
 
+void drawIMUPlots(MicroDronInterfaceUDP &interface){
+    ImGui::Begin("Measurements", nullptr, 0);
+    static RollingBuffer rollBuf, pitchBuf, yawBuf;
+    const static std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
+
+    static ImPlotAxisFlags rt_axis = ImPlotFlags_AntiAliased;
+    static float history = 10.0f;
+    ImGui::SliderFloat("History",&history,1,30,"%.1f s");
+
+    std::chrono::duration<double> duration = interface.getLastAttUpdateTime() - t;
+    double tDelta = duration.count();
+    rollBuf.AddPoint(tDelta, interface.getRoll());
+    pitchBuf.AddPoint(tDelta, interface.getPitch());
+    yawBuf.AddPoint(tDelta, interface.getYaw());
+
+    ImPlot::SetNextPlotLimitsX(tDelta - history,tDelta, ImGuiCond_Always);
+    ImPlot::SetNextPlotLimitsY(-180, 180, ImGuiCond_Always);
+    if(ImPlot::BeginPlot("IMU (Degrees)", NULL, NULL, ImVec2(-1, -1), 0, rt_axis, rt_axis)){
+        ImPlot::PlotLine("Roll", &rollBuf.Data[0].x, &rollBuf.Data[0].y, rollBuf.Data.size(), 0, 2 * sizeof(float));
+        ImPlot::PlotLine("Pitch", &pitchBuf.Data[0].x, &pitchBuf.Data[0].y, pitchBuf.Data.size(), 0, 2 * sizeof(float));
+        ImPlot::PlotLine("Yaw", &yawBuf.Data[0].x, &yawBuf.Data[0].y, yawBuf.Data.size(), 0, 2 * sizeof(float));
+        ImPlot::EndPlot();
+    }
+
+    ImGui::End();
+}
+
 int main(int argc, char const *argv[]){
     tarranisConfig.thrustAxis = sf::Joystick::X;
     tarranisConfig.rollAxis = sf::Joystick::Y;
@@ -122,6 +166,7 @@ int main(int argc, char const *argv[]){
     window.setFramerateLimit(60);
 
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGui::SFML::Init(window);
 
 #ifdef __APPLE__
@@ -228,6 +273,8 @@ int main(int argc, char const *argv[]){
             ImGui::End();
 
             drawParamWindow(interface);
+
+            drawIMUPlots(interface);
 
             ImGui::ShowDemoWindow();
 
@@ -364,5 +411,8 @@ int main(int argc, char const *argv[]){
 
     free(luaState);
     window.close();
+
+    ImPlot::DestroyContext();
+    ImGui::DestroyContext();
     return 0;
 }
