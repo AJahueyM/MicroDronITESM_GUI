@@ -34,4 +34,3 @@ cmake-build-debug/*
 *.out
 *.app
 build/*
-cmake/*
