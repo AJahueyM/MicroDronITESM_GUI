@@ -86,6 +86,8 @@ public:
 
     std::map<int, mavlink_param_value_t>& getParams();
 
+    void setParameter(const mavlink_param_set_t &paramSet);
+
     ~MicroDronInterfaceUDP();
 private:
     void update();

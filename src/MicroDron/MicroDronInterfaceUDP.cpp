@@ -170,6 +170,12 @@ void MicroDronInterfaceUDP::requestParamList() {
     sendMessage(msg);
 }
 
+void MicroDronInterfaceUDP::setParameter(const mavlink_param_set_t &paramSet) {
+    mavlink_message_t msg;
+    mavlink_msg_param_set_encode(201, 2, &msg, &paramSet);
+    sendMessage(msg);
+}
+
 std::map<int, mavlink_param_value_t> & MicroDronInterfaceUDP::getParams() {
     return paramList;
 }

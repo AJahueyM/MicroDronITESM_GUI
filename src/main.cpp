@@ -38,7 +38,72 @@ void createPIDStatus(const std::string &name, const SimplePID &pid){
 SFMLControllerConfig tarranisConfig;
 std::unique_ptr<SFMLController> controller;
 
-std::map<int, bool> paramsToSend;
+void drawParamWindow(MicroDronInterfaceUDP &interface){
+    static std::map<int, bool> paramsToSend;
+    static bool refreshParams = true;
+    static std::chrono::high_resolution_clock::time_point refreshParamsTime = std::chrono::high_resolution_clock::now();
+    auto &params = interface.getParams();
+
+    ImGui::Begin("Parameters", nullptr, 0);
+    if(ImGui::Button("Request Parameters")){
+        interface.requestParamList();
+    }
+
+    if(ImGui::TreeNode("Parameters")){
+        ImGuiTableFlags flags = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable;
+
+        if(ImGui::Button("Send Parameters")){
+            for(const auto &sendParam : paramsToSend){
+                if(sendParam.second){
+                    const auto &paramToSend(params.at(sendParam.first));
+                    mavlink_param_set_t paramSet;
+                    paramSet.param_value = paramToSend.param_value;
+                    snprintf(paramSet.param_id, sizeof(paramSet.param_id), "%s", paramToSend.param_id);
+                    paramSet.param_type = paramToSend.param_type;
+
+                    std::cout << fmt::format("Sending: {}", paramSet.param_id) << std::endl;
+
+                    interface.setParameter(paramSet);
+
+                    refreshParams = true;
+                    refreshParamsTime = std::chrono::high_resolution_clock::now();
+                }
+            }
+        }
+
+        if(refreshParams && (std::chrono::high_resolution_clock::now() - refreshParamsTime) > std::chrono::milliseconds (500)){
+            interface.requestParamList();
+            refreshParams = false;
+        }
+
+        if(ImGui::BeginTable("Parameters", 4, flags)){
+            ImGui::TableSetupColumn("Send on click", ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("Index", ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableHeadersRow();
+
+            int row = 0;
+            for(auto &param : params){
+                ImGui::TableNextRow();
+                int col = 0;
+                ImGui::TableSetColumnIndex(col++);
+                ImGui::Checkbox("",&(paramsToSend[param.first]));
+                ImGui::TableSetColumnIndex(col++);
+                ImGui::Text("%d", param.second.param_index);
+                ImGui::TableSetColumnIndex(col++);
+                ImGui::Text("%s", param.second.param_id);
+                ImGui::TableSetColumnIndex(col++);
+
+                //Needs to have a label for some reason, otherwise, checkbox does not work
+                ImGui::InputFloat(" ", &param.second.param_value, 0.1f, 0.0f, "%.5f");
+            }
+            ImGui::EndTable();
+        }
+        ImGui::TreePop();
+    }
+    ImGui::End();
+}
 
 int main(int argc, char const *argv[]){
     tarranisConfig.thrustAxis = sf::Joystick::X;
@@ -162,46 +227,7 @@ int main(int argc, char const *argv[]){
             ImGui::Text("Current mode %i", interface.getMode());
             ImGui::End();
 
-            ImGui::Begin("Parameters", nullptr, 0);
-            if(ImGui::Button("Request Parameters")){
-                interface.requestParamList();
-            }
-
-            if(ImGui::TreeNode("Parameters")){
-                ImGuiTableFlags flags = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable;
-
-                if(ImGui::Button("Send Parameters")){
-                    //
-                }
-
-                if(ImGui::BeginTable("Parameters", 4, flags)){
-                    ImGui::TableSetupColumn("Send on click", ImGuiTableColumnFlags_WidthFixed);
-                    ImGui::TableSetupColumn("Index", ImGuiTableColumnFlags_WidthFixed);
-                    ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
-                    ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
-                    ImGui::TableHeadersRow();
-
-                    auto &params = interface.getParams();
-                    int row = 0;
-                    for(auto &param : params){
-                        ImGui::TableNextRow();
-                        int col = 0;
-                        ImGui::TableSetColumnIndex(col++);
-                        ImGui::Checkbox("",&(paramsToSend[param.first]));
-                        ImGui::TableSetColumnIndex(col++);
-                        ImGui::Text("%d", param.second.param_index);
-                        ImGui::TableSetColumnIndex(col++);
-                        ImGui::Text("%s", param.second.param_id);
-                        ImGui::TableSetColumnIndex(col++);
-
-                        //Needs to have a label for some reason, otherwise, checkbox does not work
-                        ImGui::InputFloat(" ", &param.second.param_value, 0.1f, 0.0f, "%.5f");
-                    }
-                    ImGui::EndTable();
-                }
-                ImGui::TreePop();
-            }
-            ImGui::End();
+            drawParamWindow(interface);
 
             ImGui::ShowDemoWindow();
 
