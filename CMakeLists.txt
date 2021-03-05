@@ -21,17 +21,10 @@ file(GLOB_RECURSE MicroDronGUI_SRC
         "libs/implot/*.h"
         )
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-set(SFML_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake")
-message(${CMAKE_MODULE_PATH})
+include(FetchContent)
+FetchContent_Declare(mahi-gui GIT_REPOSITORY https://github.com/mahilab/mahi-gui.git)
+FetchContent_MakeAvailable(mahi-gui)
 
-find_package(SFML 2 REQUIRED network audio graphics window system)
-set(IMGUI_SFML_FIND_SFML OFF)
-set(IMGUI_SFML_BUILD_EXAMPLES OFF)
-set(IMGUI_SFML_IMGUI_DEMO ON)
-set(IMGUI_DIR "${CMAKE_CURRENT_LIST_DIR}/libs/imgui" [PARENT_SCOPE])
-
-add_subdirectory(libs/imgui-sfml EXCLUDE_FROM_ALL)
 
 find_package(fmt)
 
@@ -44,4 +37,4 @@ include_directories(libs/implot)
 
 add_executable(MicroDronITESM_GUI  ${MicroDronGUI_SRC})
 #target_link_libraries(MicroDronITESM_GUI )
-target_link_libraries(MicroDronITESM_GUI PRIVATE ImGui-SFML::ImGui-SFML ${SFML_LIBRARIES} GL pthread atomic ${LUA_LIBRARIES} fmt::fmt)
+target_link_libraries(MicroDronITESM_GUI PRIVATE mahi::gui pthread atomic ${LUA_LIBRARIES} fmt::fmt)

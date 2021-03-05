@@ -5,7 +5,7 @@
 #include "SFMLController.h"
 #include <iostream>
 #include <fmt/format.h>
-
+/*
 SFMLController::SFMLController(const SFMLControllerConfig &config) {
     this->config = config;
     thrust = JoystickAxisExpo(config.expoValue, config.deadzone);
@@ -28,3 +28,4 @@ void SFMLController::sendControl(const std::function<void(int16_t, int16_t, int1
 
     sendFun(rollOutput * 10000.0f, pitchOutput * 10000.0f, thrustOutput * 10000.0f, yawOutput * 10000.0f);
 }
+*/
