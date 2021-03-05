@@ -11,6 +11,7 @@
 #include "MicroDron/LuaMicroDronInterface.h"
 #include "implot.h"
 #include "MainApp.h"
+#include "imguiStyle.h"
 
 using namespace std::placeholders;
 
@@ -22,6 +23,8 @@ int main(int argc, char const *argv[]){
     ImGui::CreateContext();
     ImPlot::CreateContext();
     ImGui::SFML::Init(window);
+
+    setupStyle();
 
     MainApp app;
 

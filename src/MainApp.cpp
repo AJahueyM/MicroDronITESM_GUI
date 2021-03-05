@@ -99,7 +99,6 @@ void MainApp::drawParamWindow() {
             ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
             ImGui::TableHeadersRow();
 
-            int row = 0;
             for(auto &param : params){
                 ImGui::TableNextRow();
                 int col = 0;
