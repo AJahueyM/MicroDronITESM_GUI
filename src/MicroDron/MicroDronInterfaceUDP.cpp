@@ -209,6 +209,7 @@ void MicroDronInterfaceUDP::update() {
     while (isRunning) {
         memset(buf, 0, bufLen);
         int len = udp_conn_recv(&conn, buf, bufLen);
+        std::cout << len << std::endl;
 
         if (len > 0) {
             mavlink_message_t msg;
