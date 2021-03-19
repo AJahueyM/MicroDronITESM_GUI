@@ -20,13 +20,7 @@ MicroDronInterfaceUDP::MicroDronInterfaceUDP() {
     attitude.store(initialAttitude);
 
     std::string addr("192.168.1.46");
-    int ret = udp_conn_open_ip(&conn, addr.c_str(), 14551, 14550);
-
-    if (ret < 0) {
-        perror("UDP conn open failed");
-        udp_conn_close(&conn);
-        throw std::runtime_error("UDP conn open failed");
-    }
+    comms = new ESPComms(addr, 14550, 14551, 14552);
 
 //    ret = fcntl(sock, F_SETFL, O_NONBLOCK | FASYNC);
 //    if(ret < 0){
@@ -58,13 +52,10 @@ void MicroDronInterfaceUDP::setHeightPid(SimplePID heightPid) {
 void MicroDronInterfaceUDP::sendHeartBeat() {
     //Send hb to drone
     mavlink_message_t msg;
-    mavlink_msg_heartbeat_pack(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, MAV_COMP_ID_AUTOPILOT1,0,0,0,isEmergencyStopped() ? MAV_STATE_EMERGENCY : 0);
+    mavlink_msg_heartbeat_pack(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, MAV_COMP_ID_AUTOPILOT1, 0, 0, 0,
+                               isEmergencyStopped() ? MAV_STATE_EMERGENCY : 0);
 
-    size_t bufLen = MAVLINK_MAX_PACKET_LEN + sizeof(uint64_t);
-    uint8_t buf[bufLen];
-    auto size = mavlink_msg_to_send_buffer(buf, &msg);
-
-    udp_conn_send(&conn, buf, size);
+    comms->sendMessage(msg);
 }
 
 float MicroDronInterfaceUDP::getPitch() const {
@@ -159,14 +150,12 @@ SimplePID MicroDronInterfaceUDP::getHeightPid() const {
 }
 
 void MicroDronInterfaceUDP::sendMessage(const mavlink_message_t &msg) {
-    static uint8_t buffer[4096];
-    auto size = mavlink_msg_to_send_buffer(buffer, &msg);
-    udp_conn_send(&conn, buffer, size);
+    comms->sendMessage(msg);
 }
 
 void MicroDronInterfaceUDP::requestParamList() {
     mavlink_message_t msg;
-    mavlink_msg_param_request_list_pack(201, 2, &msg,0,0);
+    mavlink_msg_param_request_list_pack(201, 2, &msg, 0, 0);
     sendMessage(msg);
 }
 
@@ -176,7 +165,7 @@ void MicroDronInterfaceUDP::setParameter(const mavlink_param_set_t &paramSet) {
     sendMessage(msg);
 }
 
-std::map<int, mavlink_param_value_t> & MicroDronInterfaceUDP::getParams() {
+std::map<int, mavlink_param_value_t> &MicroDronInterfaceUDP::getParams() {
     return paramList;
 }
 
@@ -193,13 +182,9 @@ void MicroDronInterfaceUDP::sendJoystickControl(int16_t x, int16_t y, int16_t z,
     mavlink_message_t msg;
     mavlink_msg_manual_control_pack(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, MAV_COMP_ID_AUTOPILOT1,
                                     x, y,
-                                    z, r,0);
+                                    z, r, 0);
 
-    size_t bufLen = MAVLINK_MAX_PACKET_LEN + sizeof(uint64_t);
-    uint8_t buf[bufLen];
-    auto size = mavlink_msg_to_send_buffer(buf, &msg);
-
-    udp_conn_send(&conn, buf, size);
+    comms->sendMessage(msg);
 }
 
 void MicroDronInterfaceUDP::update() {
@@ -208,51 +193,45 @@ void MicroDronInterfaceUDP::update() {
 
     while (isRunning) {
         memset(buf, 0, bufLen);
-        int len = udp_conn_recv(&conn, buf, bufLen);
-        std::cout << len << std::endl;
+        auto ret = comms->getMessage();
 
-        if (len > 0) {
-            mavlink_message_t msg;
-            mavlink_status_t status;
+        if (ret.has_value()) {
+            mavlink_message_t &msg(ret.value());
             mavlink_attitude_t new_attitude;
             mavlink_distance_sensor_t new_distanceSensor;
-            for (int i = 0; i < len; ++i) {
-                if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) {
-                    switch (msg.msgid) {
-                        case MAVLINK_MSG_ID_ATTITUDE:
-                            mavlink_msg_attitude_decode(&msg, &new_attitude);
-                            attitude = new_attitude;
-                            lastAttUpdateTime = std::chrono::high_resolution_clock::now();
-                            break;
-                        case MAVLINK_MSG_ID_DISTANCE_SENSOR:
-                            mavlink_msg_distance_sensor_decode(&msg, &new_distanceSensor);
-                            distanceSensor = new_distanceSensor;
-                            break;
-                        case MAVLINK_MSG_ID_HEARTBEAT:
-                            lastHb = std::chrono::high_resolution_clock::now();
-                            break;
-                        case MAVLINK_MSG_ID_PARAM_VALUE:
-                            mavlink_param_value_t param;
-                            mavlink_msg_param_value_decode(&msg, &param);
+            switch (msg.msgid) {
+                case MAVLINK_MSG_ID_ATTITUDE:
+                    mavlink_msg_attitude_decode(&msg, &new_attitude);
+                    attitude = new_attitude;
+                    lastAttUpdateTime = std::chrono::high_resolution_clock::now();
+                    break;
+                case MAVLINK_MSG_ID_DISTANCE_SENSOR:
+                    mavlink_msg_distance_sensor_decode(&msg, &new_distanceSensor);
+                    distanceSensor = new_distanceSensor;
+                    break;
+                case MAVLINK_MSG_ID_HEARTBEAT:
+                    lastHb = std::chrono::high_resolution_clock::now();
+                    break;
+                case MAVLINK_MSG_ID_PARAM_VALUE:
+                    mavlink_param_value_t param;
+                    mavlink_msg_param_value_decode(&msg, &param);
 
-                            paramList[param.param_index] = param;
-                            std::cout << fmt::format("Got param: {} i: {}", param.param_id, param.param_index) << std::endl;
-                            break;
-                        case MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY:
-                            mavlink_debug_float_array_t floatArr;
-                            mavlink_msg_debug_float_array_decode(&msg, &floatArr);
-                            if(floatArr.array_id == 0){
-                                lastMotorUpdateTime = std::chrono::high_resolution_clock::now();
-                                motorValues.frontLeft = floatArr.data[0];
-                                motorValues.frontRight = floatArr.data[1];
-                                motorValues.backLeft = floatArr.data[2];
-                                motorValues.backRight = floatArr.data[3];
-                            }
-                            break;
-                        default:
-                            break;
+                    paramList[param.param_index] = param;
+                    std::cout << fmt::format("Got param: {} i: {}", param.param_id, param.param_index) << std::endl;
+                    break;
+                case MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY:
+                    mavlink_debug_float_array_t floatArr;
+                    mavlink_msg_debug_float_array_decode(&msg, &floatArr);
+                    if (floatArr.array_id == 0) {
+                        lastMotorUpdateTime = std::chrono::high_resolution_clock::now();
+                        motorValues.frontLeft = floatArr.data[0];
+                        motorValues.frontRight = floatArr.data[1];
+                        motorValues.backLeft = floatArr.data[2];
+                        motorValues.backRight = floatArr.data[3];
                     }
-                }
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -281,6 +260,5 @@ std::chrono::high_resolution_clock::time_point MicroDronInterfaceUDP::getLastMot
 
 MicroDronInterfaceUDP::~MicroDronInterfaceUDP() {
     isRunning = false;
-    udp_conn_close(&conn);
     updateThread.join();
 }

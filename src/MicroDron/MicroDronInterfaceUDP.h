@@ -17,6 +17,7 @@
 #include "mavlink.h"
 #include <atomic>
 #include <map>
+#include "ESPComms.h"
 
 struct MotorValues{
     float frontLeft, frontRight;
@@ -111,7 +112,6 @@ private:
     struct sockaddr_in gs_server{}, gs_client{}; //Local IP addr
     std::atomic<mavlink_attitude_t> attitude{};
     std::atomic<mavlink_distance_sensor_t> distanceSensor{};
-    udp_conn_data conn;
 
     std::chrono::high_resolution_clock::time_point lastHb;
 
@@ -124,6 +124,8 @@ private:
     std::chrono::high_resolution_clock::time_point lastMotorUpdateTime;
 
     std::chrono::high_resolution_clock::time_point lastAttUpdateTime;
+
+    ESPComms *comms;
 };
 
 
