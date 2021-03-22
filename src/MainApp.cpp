@@ -191,5 +191,4 @@ void MainApp::showScriptsWindow() {
 }
 
 MainApp::~MainApp() {
-    free(luaState);
 }

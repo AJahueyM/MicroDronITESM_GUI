@@ -32,6 +32,11 @@ public:
 
     std::optional<mavlink_message_t> getMessage();
 private:
+    std::string serverIp;
+    int tcpPort;
+
+    void connectTCP(const std::string &serverIp, int tcpPort);
+
     [[noreturn]] void readTask();
 
     [[noreturn]] void writeTask();
