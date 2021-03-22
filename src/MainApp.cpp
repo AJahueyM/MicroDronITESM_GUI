@@ -29,7 +29,7 @@ void MainApp::update() {
     showScriptsWindow();
 
     if (sf::Joystick::isConnected(0)) {
-        controller->sendControl(std::bind(&MicroDronInterface::sendJoystickControl, &interface, _1, _2, _3, _4));
+        controller->sendControl(std::bind(&MicroDronInterface::sendJoystickControl, &interface, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 }
 

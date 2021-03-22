@@ -37,6 +37,9 @@ add_subdirectory(libs/imgui-sfml EXCLUDE_FROM_ALL)
 
 find_package(fmt)
 
+find_package(Boost COMPONENTS system)
+include_directories(${Boost_INCLUDE_DIR})
+
 
 include_directories(src)
 include_directories(libs/MAVLinkV2/common)
@@ -46,4 +49,4 @@ include_directories(libs/implot)
 
 add_executable(MicroDronITESM_GUI  ${MicroDronGUI_SRC})
 #target_link_libraries(MicroDronITESM_GUI )
-target_link_libraries(MicroDronITESM_GUI PRIVATE ImGui-SFML::ImGui-SFML ${SFML_LIBRARIES} GL pthread atomic ${LUA_LIBRARIES} fmt::fmt)
+target_link_libraries(MicroDronITESM_GUI PRIVATE ImGui-SFML::ImGui-SFML ${Boost_LIBRARIES} ${SFML_LIBRARIES} GL pthread atomic ${LUA_LIBRARIES} fmt::fmt)
