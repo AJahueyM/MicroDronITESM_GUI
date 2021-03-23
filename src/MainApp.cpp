@@ -81,7 +81,7 @@ void MainApp::drawParamWindow() {
 
                     interface.setParameter(paramSet);
 
-                    refreshParams = true;
+                    refreshParams = false;
                     refreshParamsTime = std::chrono::high_resolution_clock::now();
                 }
             }
@@ -124,13 +124,13 @@ void MainApp::drawParamWindow() {
 }
 
 void MainApp::drawIMUPlots() {
-    ImGui::Begin("Measurements", nullptr, 0);
+    ImGui::Begin("Measurements", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
     static ScrollingBuffer rollBuf, pitchBuf, yawBuf;
     static ScrollingBuffer m0, m1, m2, m3;
 
     const static std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
 
-    static ImPlotAxisFlags rt_axis = ImPlotAxisFlags_None;
+    static ImPlotAxisFlags rt_axis = ImPlotFlags_AntiAliased;
     static float history = 10.0f;
     ImGui::SliderFloat("History",&history,1,30,"%.1f s");
 
@@ -143,7 +143,7 @@ void MainApp::drawIMUPlots() {
 
     ImPlot::SetNextPlotLimitsX(tDelta - history,tDelta, ImGuiCond_Always);
     ImPlot::SetNextPlotLimitsY(-180, 180);
-    if(ImPlot::BeginPlot("IMU (Degrees)", "Time (s)", "Degrees", ImVec2(-1, 250), 0, rt_axis, rt_axis)){
+    if(ImPlot::BeginPlot("IMU (Degrees)", "Time (s)", "Degrees", ImVec2(500, 350), 0, rt_axis, rt_axis)){
         ImPlot::PlotLine("Roll", &rollBuf.Data[0].x, &rollBuf.Data[0].y, rollBuf.Data.size(), 0, 2 * sizeof(float));
         ImPlot::PlotLine("Pitch", &pitchBuf.Data[0].x, &pitchBuf.Data[0].y, pitchBuf.Data.size(), pitchBuf.Offset, 2 * sizeof(float));
         ImPlot::PlotLine("Yaw", &yawBuf.Data[0].x, &yawBuf.Data[0].y, yawBuf.Data.size(), yawBuf.Offset, 2 * sizeof(float));
@@ -161,7 +161,7 @@ void MainApp::drawIMUPlots() {
     ImPlot::SetNextPlotLimitsX(tDelta - history,tDelta, ImGuiCond_Always);
     ImPlot::SetNextPlotLimitsY(-10, 1000);
 
-    if(ImPlot::BeginPlot("Motor Outputs", "Time (s)", "Duty Cycle", ImVec2(-1, 250), 0, rt_axis, rt_axis)){
+    if(ImPlot::BeginPlot("Motor Outputs", "Time (s)", "Duty Cycle", ImVec2(500, 350), 0, rt_axis, rt_axis)){
         ImPlot::PlotLine("Front Left", &m0.Data[0].x, &m0.Data[0].y, m0.Data.size(), m0.Offset, 2 * sizeof(float));
         ImPlot::PlotLine("Front Right", &m1.Data[0].x, &m1.Data[0].y, m1.Data.size(), m1.Offset, 2 * sizeof(float));
         ImPlot::PlotLine("Back Left", &m2.Data[0].x, &m2.Data[0].y, m2.Data.size(), m2.Offset, 2 * sizeof(float));

@@ -161,20 +161,12 @@ void MicroDronInterfaceUDP::requestParamList() {
 }
 
 void MicroDronInterfaceUDP::setParameter(const mavlink_param_set_t &paramSet) {
-    auto it = pendingParams.find(paramSet);
+    std::unique_lock nextGuard(nextToAccessMutex);
+    std::lock_guard guard(updateMutex);
 
-    if(it != pendingParams.end()){
-        std::unique_lock nextGuard(nextToAccessMutex);
-        std::lock_guard guard(updateMutex);
+    nextGuard.unlock();
 
-        nextGuard.unlock();
-
-        mavlink_message_t msg;
-        mavlink_msg_param_set_encode(201, 2, &msg, &paramSet);
-        sendMessage(msg);
-        pendingParams[paramSet] = msg;
-    }
-
+    pendingParams[paramSet.param_id] = paramSet;
 }
 
 std::map<int, mavlink_param_value_t> &MicroDronInterfaceUDP::getParams() {
@@ -281,31 +273,44 @@ void MicroDronInterfaceUDP::hbUpdate() {
 }
 
 void MicroDronInterfaceUDP::sendAndCheckParams() {
+    mavlink_message_t msg;
+
     while(isRunning) {
-
-
         if (pendingParams.empty()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(250));
-        }else{
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        } else{
             std::unique_lock nextGuard(nextToAccessMutex);
             std::lock_guard guard(updateMutex);
 
             nextGuard.unlock();
 
-            requestParamList();
+            for(auto it = pendingParams.cbegin(); it != pendingParams.cend();){
+                bool eraseParam = false;
+                for(const auto& param : this->paramList){
+                    if(std::strncmp(it->first.c_str(), param.second.param_id, 16) == 0 ){
+                        //std::cout << fmt::format("{} and {}", it->first, param.second.param_id) << std::endl;
+                        //std::cout << fmt::format("{} and {}", it->second.param_value, param.second.param_value) << std::endl;
 
-            for(const auto& pendingParam : pendingParams){
-                for(const auto& param : paramList){
-                    if(pendingParam.first.param_id == param.second.param_id ){
-                        if(pendingParam.first.param_value != param.second.param_value){
-                            sendMessage(pendingParam.second);
-                        }else{
-                            pendingParams.erase(pendingParam.first);
+                        if(it->second.param_value != param.second.param_value){
+                            mavlink_msg_param_set_encode(201, 1, &msg, &it->second);
+                            sendMessage(msg);
+                        } else {
+                            eraseParam = true;
                         }
+                        break;
                     }
                 }
+
+                if(eraseParam){
+                    pendingParams.erase(it++);
+                } else {
+                    ++it;
+                }
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+            //requestParamList();
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
     }
 }

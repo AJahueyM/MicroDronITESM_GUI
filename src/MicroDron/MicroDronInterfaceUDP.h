@@ -123,7 +123,7 @@ private:
     std::mutex updateMutex, nextToAccessMutex, lowPriorityMutex;
 
 
-    std::map<mavlink_param_set_t, mavlink_message_t> pendingParams {};
+    std::map<std::string, mavlink_param_set_t> pendingParams {};
 
     bool isRunning = true;
 
