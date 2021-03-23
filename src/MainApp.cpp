@@ -66,7 +66,7 @@ void MainApp::drawParamWindow() {
     }
 
     if(ImGui::TreeNode("Parameters")){
-        ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable;
+        ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
 
         if(ImGui::Button("Send Parameters")){
             for(const auto &sendParam : paramsToSend){
@@ -87,7 +87,8 @@ void MainApp::drawParamWindow() {
             }
         }
 
-        if(refreshParams && (std::chrono::high_resolution_clock::now() - refreshParamsTime) > std::chrono::milliseconds (500)){
+        if(refreshParams && (std::chrono::high_resolution_clock::now() - refreshParamsTime) > std::chrono::milliseconds (150)){
+            std::cout << "request" << std::endl;
             interface.requestParamList();
             refreshParams = false;
         }
@@ -96,22 +97,24 @@ void MainApp::drawParamWindow() {
             ImGui::TableSetupColumn("Send on click", ImGuiTableColumnFlags_WidthFixed);
             ImGui::TableSetupColumn("Index", ImGuiTableColumnFlags_WidthFixed);
             ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
-            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn("Value", 0);
             ImGui::TableHeadersRow();
 
+            int row = 0;
             for(auto &param : params){
                 ImGui::TableNextRow();
-                int col = 0;
-                ImGui::TableSetColumnIndex(col++);
+                ImGui::PushID(row++);
+                ImGui::TableNextColumn();
                 ImGui::Checkbox("",&(paramsToSend[param.first]));
-                ImGui::TableSetColumnIndex(col++);
+                ImGui::TableNextColumn();
                 ImGui::Text("%d", param.second.param_index);
-                ImGui::TableSetColumnIndex(col++);
+                ImGui::TableNextColumn();
                 ImGui::Text("%s", param.second.param_id);
-                ImGui::TableSetColumnIndex(col++);
+                ImGui::TableNextColumn();
 
                 //Needs to have a label for some reason, otherwise, checkbox does not work
                 ImGui::InputFloat(" ", &param.second.param_value, 0.1f, 0.0f, "%.5f");
+                ImGui::PopID();
             }
             ImGui::EndTable();
         }
@@ -122,56 +125,47 @@ void MainApp::drawParamWindow() {
 
 void MainApp::drawIMUPlots() {
     ImGui::Begin("Measurements", nullptr, 0);
-    const std::size_t bufSize = 5000;
-    static boost::circular_buffer<std::pair<float,float>> rollBuf(bufSize), pitchBuf(bufSize), yawBuf(bufSize);
-    static boost::circular_buffer<std::pair<float,float>> m0(bufSize), m1(bufSize), m2(bufSize), m3(bufSize);
-    static double lastTDeltaIMU = 0; static double lastTDeltaMotors = 0;
+    static ScrollingBuffer rollBuf, pitchBuf, yawBuf;
+    static ScrollingBuffer m0, m1, m2, m3;
 
     const static std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
 
-    static ImPlotAxisFlags rt_axis = ImPlotFlags_AntiAliased;
+    static ImPlotAxisFlags rt_axis = ImPlotAxisFlags_None;
     static float history = 10.0f;
     ImGui::SliderFloat("History",&history,1,30,"%.1f s");
 
     std::chrono::duration<double> duration = interface.getLastAttUpdateTime() - t;
-    double tDelta = duration.count();
+    float tDelta = duration.count();
 
-    if(lastTDeltaIMU < tDelta){
-        rollBuf.push_back(std::make_pair(tDelta, interface.getRoll()));
-        pitchBuf.push_back(std::make_pair(tDelta, interface.getPitch()));
-        yawBuf.push_back(std::make_pair(tDelta, interface.getYaw()));
-    }
-    lastTDeltaIMU = tDelta;
+    rollBuf.AddPoint(tDelta, interface.getRoll());
+    pitchBuf.AddPoint(tDelta, interface.getPitch());
+    yawBuf.AddPoint(tDelta, interface.getYaw());
 
     ImPlot::SetNextPlotLimitsX(tDelta - history,tDelta, ImGuiCond_Always);
-    ImPlot::SetNextPlotLimitsY(-180, 180, ImGuiCond_Always);
-    if(ImPlot::BeginPlot("IMU (Degrees)", NULL, NULL, ImVec2(-1, 250), 0, rt_axis, rt_axis)){
-        ImPlot::PlotLine("Roll", &rollBuf[0].first, &rollBuf[0].second, rollBuf.size(), 0, 2 * sizeof(float));
-        ImPlot::PlotLine("Pitch", &pitchBuf[0].first, &pitchBuf[0].second, pitchBuf.size(), 0, 2 * sizeof(float));
-        ImPlot::PlotLine("Yaw", &yawBuf[0].first, &yawBuf[0].second, yawBuf.size(), 0, 2 * sizeof(float));
+    ImPlot::SetNextPlotLimitsY(-180, 180);
+    if(ImPlot::BeginPlot("IMU (Degrees)", "Time (s)", "Degrees", ImVec2(-1, 250), 0, rt_axis, rt_axis)){
+        ImPlot::PlotLine("Roll", &rollBuf.Data[0].x, &rollBuf.Data[0].y, rollBuf.Data.size(), 0, 2 * sizeof(float));
+        ImPlot::PlotLine("Pitch", &pitchBuf.Data[0].x, &pitchBuf.Data[0].y, pitchBuf.Data.size(), pitchBuf.Offset, 2 * sizeof(float));
+        ImPlot::PlotLine("Yaw", &yawBuf.Data[0].x, &yawBuf.Data[0].y, yawBuf.Data.size(), yawBuf.Offset, 2 * sizeof(float));
         ImPlot::EndPlot();
     }
 
     duration = interface.getLastMotorUpdate() - t;
     tDelta = duration.count();
     auto motorValues = interface.getMotorValues();
-    if(lastTDeltaMotors < tDelta){
-        m0.push_back(std::make_pair(tDelta, motorValues.frontLeft));
-        m1.push_back(std::make_pair(tDelta, motorValues.frontRight));
-        m2.push_back(std::make_pair(tDelta, motorValues.backLeft));
-        m3.push_back(std::make_pair(tDelta, motorValues.backRight));
-    }
-
-    lastTDeltaMotors = tDelta;
+    m0.AddPoint(tDelta, motorValues.frontLeft);
+    m1.AddPoint(tDelta, motorValues.frontRight);
+    m2.AddPoint(tDelta, motorValues.backLeft);
+    m3.AddPoint(tDelta, motorValues.backRight);
 
     ImPlot::SetNextPlotLimitsX(tDelta - history,tDelta, ImGuiCond_Always);
-    ImPlot::SetNextPlotLimitsY(-10, 1000, ImGuiCond_Always);
+    ImPlot::SetNextPlotLimitsY(-10, 1000);
 
-    if(ImPlot::BeginPlot("Motor Outputs", NULL, NULL, ImVec2(-1, 250), 0, rt_axis, rt_axis)){
-        ImPlot::PlotLine("Front Left", &m0[0].first, &m0[0].second, m0.size(), 0, 2 * sizeof(float));
-        ImPlot::PlotLine("Front Right", &m1[0].first, &m1[0].second, m1.size(), 0, 2 * sizeof(float));
-        ImPlot::PlotLine("Back Left", &m2[0].first, &m2[0].second, m2.size(), 0, 2 * sizeof(float));
-        ImPlot::PlotLine("Back Right", &m3[0].first, &m3[0].second, m3.size(), 0, 2 * sizeof(float));
+    if(ImPlot::BeginPlot("Motor Outputs", "Time (s)", "Duty Cycle", ImVec2(-1, 250), 0, rt_axis, rt_axis)){
+        ImPlot::PlotLine("Front Left", &m0.Data[0].x, &m0.Data[0].y, m0.Data.size(), m0.Offset, 2 * sizeof(float));
+        ImPlot::PlotLine("Front Right", &m1.Data[0].x, &m1.Data[0].y, m1.Data.size(), m1.Offset, 2 * sizeof(float));
+        ImPlot::PlotLine("Back Left", &m2.Data[0].x, &m2.Data[0].y, m2.Data.size(), m2.Offset, 2 * sizeof(float));
+        ImPlot::PlotLine("Back Right", &m3.Data[0].x, &m3.Data[0].y, m3.Data.size(), m3.Offset, 2 * sizeof(float));
         ImPlot::EndPlot();
     }
 

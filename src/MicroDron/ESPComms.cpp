@@ -51,7 +51,9 @@ void ESPComms::handle_receive(const boost::system::error_code &error, std::size_
 }
 
 void ESPComms::handle_send(const boost::system::error_code &error, std::size_t bytes) {
-    ;
+    if(error){
+        std::cout << "help" << std::endl;
+    }
 }
 
 void ESPComms::handle_accept(tcp_connection::pointer new_conn, const boost::system::error_code &error) {
@@ -65,10 +67,12 @@ void ESPComms::sendMessage(const mavlink_message_t &msg) {
         droneConn->queueWrite(msg);
     } else {
         int len = mavlink_msg_to_send_buffer(buf, &msg);
-        udpServerSocket.async_send_to(boost::asio::buffer(buf, len), remote_endpoint,
+        auto boostBuf = std::make_shared<std::string>((char*) buf, len);
+        udpServerSocket.async_send_to(boost::asio::buffer(*boostBuf), remote_endpoint,
                                       boost::bind(&ESPComms::handle_send, this,
                                                   boost::asio::placeholders::error,
                                                   boost::asio::placeholders::bytes_transferred));
+
     }
 }
 

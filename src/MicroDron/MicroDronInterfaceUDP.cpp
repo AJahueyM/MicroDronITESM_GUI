@@ -219,17 +219,28 @@ void MicroDronInterfaceUDP::update() {
                     paramList[param.param_index] = param;
                     std::cout << fmt::format("Got param: {} i: {}", param.param_id, param.param_index) << std::endl;
                     break;
-                case MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY:
-                    mavlink_debug_float_array_t floatArr;
-                    mavlink_msg_debug_float_array_decode(&msg, &floatArr);
-                    if (floatArr.array_id == 0) {
-                        lastMotorUpdateTime = std::chrono::high_resolution_clock::now();
-                        motorValues.frontLeft = floatArr.data[0];
-                        motorValues.frontRight = floatArr.data[1];
-                        motorValues.backLeft = floatArr.data[2];
-                        motorValues.backRight = floatArr.data[3];
+                case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
+                    mavlink_named_value_float_t valueFloat;
+                    mavlink_msg_named_value_float_decode(&msg, &valueFloat);
+
+                    bool isMotor; isMotor = false;
+                    if(strcasecmp(valueFloat.name, "FrontLeft") == 0){
+                        motorValues.frontLeft = valueFloat.value;
+                        isMotor = true;
+                    } else if(strcasecmp(valueFloat.name, "FrontRight") == 0){
+                        motorValues.frontRight = valueFloat.value;
+                        isMotor = true;
+                    } else if(strcasecmp(valueFloat.name, "BackLeft") == 0){
+                        motorValues.backLeft = valueFloat.value;
+                        isMotor = true;
+                    } else if(strcasecmp(valueFloat.name, "BackRight") == 0){
+                        motorValues.backRight = valueFloat.value;
+                        isMotor = true;
                     }
+
+                    if(isMotor) lastMotorUpdateTime = std::chrono::high_resolution_clock::now();
                     break;
+
                 default:
                     break;
             }

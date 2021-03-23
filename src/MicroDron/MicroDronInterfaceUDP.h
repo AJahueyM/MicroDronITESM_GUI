@@ -121,9 +121,9 @@ private:
     bool isRunning = true;
 
     MotorValues motorValues;
-    std::chrono::high_resolution_clock::time_point lastMotorUpdateTime;
+    std::chrono::high_resolution_clock::time_point lastMotorUpdateTime = std::chrono::high_resolution_clock::now();
 
-    std::chrono::high_resolution_clock::time_point lastAttUpdateTime;
+    std::chrono::high_resolution_clock::time_point lastAttUpdateTime = std::chrono::high_resolution_clock::now();
 
     ESPComms *comms;
 };

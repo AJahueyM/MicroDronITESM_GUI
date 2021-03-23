@@ -14,6 +14,33 @@
 #include "Utils/SFMLController.h"
 #include <boost/circular_buffer.hpp>
 
+struct ScrollingBuffer {
+    size_t MaxSize;
+    int Offset;
+    std::vector<ImVec2> Data;
+    ScrollingBuffer(size_t max_size = 5000) {
+        MaxSize = max_size;
+        Offset  = 0;
+        Data.reserve(MaxSize);
+    }
+    void AddPoint(float x, float y) {
+        auto l = Data.size();
+        if (Data.size() < MaxSize)
+            Data.emplace_back(x,y);
+        else {
+            Data[Offset] = ImVec2(x,y);
+            Offset =  (Offset + 1) % MaxSize;
+        }
+    }
+    void Erase() {
+        return;
+        if (Data.size() > 0) {
+            Data.resize(0);
+            Offset  = 0;
+        }
+    }
+};
+
 class MainApp {
 public:
     MainApp();
