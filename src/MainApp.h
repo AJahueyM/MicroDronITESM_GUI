@@ -12,6 +12,7 @@
 #include "PlotVar.h"
 #include "implot.h"
 #include "Utils/SFMLController.h"
+#include <boost/circular_buffer.hpp>
 
 class MainApp {
 public:
@@ -33,22 +34,6 @@ private:
     std::unique_ptr<SFMLController> controller;
 
     bool lastScriptButton = false;
-
-    // utility structure for realtime plot
-    struct RollingBuffer {
-        float Span;
-        ImVector<ImVec2> Data;
-        RollingBuffer() {
-            Span = 100.0f;
-            Data.reserve(30000);
-        }
-        void AddPoint(float x, float y) {
-            float xmod = fmodf(x, Span);
-            if (!Data.empty() && xmod < Data.back().x)
-                Data.shrink(0);
-            Data.push_back(ImVec2(xmod, y));
-        }
-    };
 
     void createPIDConfigMenu(const std::string &name, SimplePID &pid, const std::function<void(const SimplePID &pid)> &setFun, int id);
 

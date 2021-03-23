@@ -37,7 +37,7 @@ add_subdirectory(libs/imgui-sfml EXCLUDE_FROM_ALL)
 
 find_package(fmt)
 
-find_package(Boost COMPONENTS system)
+find_package(Boost COMPONENTS system thread)
 include_directories(${Boost_INCLUDE_DIR})
 
 
