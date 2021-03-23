@@ -31,6 +31,7 @@ MicroDronInterfaceUDP::MicroDronInterfaceUDP() {
     lastHb = std::chrono::high_resolution_clock::now();
     updateThread = std::thread(&MicroDronInterfaceUDP::update, this);
     hbThread = std::thread(&MicroDronInterfaceUDP::hbUpdate, this);
+    paramsThread = std::thread(&MicroDronInterfaceUDP::sendAndCheckParams, this);
 }
 
 void MicroDronInterfaceUDP::setPitchPid(SimplePID pitchPid) {
@@ -160,9 +161,20 @@ void MicroDronInterfaceUDP::requestParamList() {
 }
 
 void MicroDronInterfaceUDP::setParameter(const mavlink_param_set_t &paramSet) {
-    mavlink_message_t msg;
-    mavlink_msg_param_set_encode(201, 2, &msg, &paramSet);
-    sendMessage(msg);
+    auto it = pendingParams.find(paramSet);
+
+    if(it != pendingParams.end()){
+        std::unique_lock nextGuard(nextToAccessMutex);
+        std::lock_guard guard(updateMutex);
+
+        nextGuard.unlock();
+
+        mavlink_message_t msg;
+        mavlink_msg_param_set_encode(201, 2, &msg, &paramSet);
+        sendMessage(msg);
+        pendingParams[paramSet] = msg;
+    }
+
 }
 
 std::map<int, mavlink_param_value_t> &MicroDronInterfaceUDP::getParams() {
@@ -192,6 +204,13 @@ void MicroDronInterfaceUDP::update() {
     uint8_t buf[bufLen];
 
     while (isRunning) {
+        std::lock_guard lowGuard(lowPriorityMutex);
+        std::unique_lock nextToAccess(nextToAccessMutex);
+        std::lock_guard updateGuard(updateMutex);
+
+        nextToAccess.unlock();
+
+
         memset(buf, 0, bufLen);
         auto ret = comms->getMessage();
 
@@ -258,6 +277,36 @@ void MicroDronInterfaceUDP::hbUpdate() {
     while (isRunning) {
         sendHeartBeat();
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
+}
+
+void MicroDronInterfaceUDP::sendAndCheckParams() {
+    while(isRunning) {
+
+
+        if (pendingParams.empty()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        }else{
+            std::unique_lock nextGuard(nextToAccessMutex);
+            std::lock_guard guard(updateMutex);
+
+            nextGuard.unlock();
+
+            requestParamList();
+
+            for(const auto& pendingParam : pendingParams){
+                for(const auto& param : paramList){
+                    if(pendingParam.first.param_id == param.second.param_id ){
+                        if(pendingParam.first.param_value != param.second.param_value){
+                            sendMessage(pendingParam.second);
+                        }else{
+                            pendingParams.erase(pendingParam.first);
+                        }
+                    }
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
     }
 }
 

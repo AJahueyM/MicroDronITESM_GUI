@@ -107,6 +107,8 @@ private:
 
     void sendMessage(const mavlink_message_t &msg);
 
+    void sendAndCheckParams();
+
     bool emergencyStopped{false};
     const uint16_t gs_port = 14550;
     struct sockaddr_in gs_server{}, gs_client{}; //Local IP addr
@@ -117,7 +119,12 @@ private:
 
     std::map<int, mavlink_param_value_t> paramList;
 
-    std::thread updateThread, hbThread;
+    std::thread updateThread, hbThread, paramsThread;
+    std::mutex updateMutex, nextToAccessMutex, lowPriorityMutex;
+
+
+    std::map<mavlink_param_set_t, mavlink_message_t> pendingParams {};
+
     bool isRunning = true;
 
     MotorValues motorValues;
