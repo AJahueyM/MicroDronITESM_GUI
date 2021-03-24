@@ -2,6 +2,7 @@
 // Created by abiel on 3/5/21.
 //
 
+#include <SFML/Window/Keyboard.hpp>
 #include "MainApp.h"
 
 using namespace std::placeholders;
@@ -58,7 +59,9 @@ void MainApp::createPIDStatus(const std::string &name, const SimplePID &pid){
 
 void MainApp::drawParamWindow() {
     static std::chrono::high_resolution_clock::time_point refreshParamsTime = std::chrono::high_resolution_clock::now();
-    auto &params = interface.getParams();
+    const auto &params = interface.getParams();
+    static std::map<int, bool> sendParam;
+    static auto paramsCache = interface.getParams();
 
     ImGui::Begin("Parameters", nullptr, 0);
     if(ImGui::Button("Request Parameters")){
@@ -69,27 +72,24 @@ void MainApp::drawParamWindow() {
         ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
 
         if(ImGui::Button("Send Parameters")){
-            for(const auto &sendParam : paramsToSend){
-                if(sendParam.second){
-                    const auto &paramToSend(params.at(sendParam.first));
-                    mavlink_param_set_t paramSet;
-                    paramSet.param_value = paramToSend.param_value;
-                    snprintf(paramSet.param_id, sizeof(paramSet.param_id), "%s", paramToSend.param_id);
-                    paramSet.param_type = paramToSend.param_type;
+            for(auto &cParam : paramsCache){
+                if(sendParam[cParam.first]){
 
-                    std::cout << fmt::format("Sending: {}", paramSet.param_id) << std::endl;
+                    mavlink_param_set_t paramSet;
+                    paramSet.param_value = cParam.second.param_value;
+                    snprintf(paramSet.param_id, sizeof(paramSet.param_id), "%s", cParam.second.param_id);
+                    paramSet.param_type = cParam.second.param_type;
 
                     interface.setParameter(paramSet);
 
-                    refreshParams = false;
+                    refreshParams = true;
                     refreshParamsTime = std::chrono::high_resolution_clock::now();
                 }
             }
         }
 
-        if(refreshParams && (std::chrono::high_resolution_clock::now() - refreshParamsTime) > std::chrono::milliseconds (150)){
-            std::cout << "request" << std::endl;
-            interface.requestParamList();
+        if(refreshParams && (std::chrono::high_resolution_clock::now() - refreshParamsTime) > std::chrono::milliseconds (1500)){
+            paramsCache = interface.getParams();
             refreshParams = false;
         }
 
@@ -105,7 +105,7 @@ void MainApp::drawParamWindow() {
                 ImGui::TableNextRow();
                 ImGui::PushID(row++);
                 ImGui::TableNextColumn();
-                ImGui::Checkbox("",&(paramsToSend[param.first]));
+                ImGui::Checkbox("",&(sendParam[param.first]));
                 ImGui::TableNextColumn();
                 ImGui::Text("%d", param.second.param_index);
                 ImGui::TableNextColumn();
@@ -113,7 +113,7 @@ void MainApp::drawParamWindow() {
                 ImGui::TableNextColumn();
 
                 //Needs to have a label for some reason, otherwise, checkbox does not work
-                ImGui::InputFloat(" ", &param.second.param_value, 0.1f, 0.0f, "%.5f");
+                ImGui::InputFloat(" ", &(paramsCache[param.first].param_value), 0.1f, 0.0f, "%.5f");
                 ImGui::PopID();
             }
             ImGui::EndTable();
@@ -159,7 +159,7 @@ void MainApp::drawIMUPlots() {
     m3.AddPoint(tDelta, motorValues.backRight);
 
     ImPlot::SetNextPlotLimitsX(tDelta - history,tDelta, ImGuiCond_Always);
-    ImPlot::SetNextPlotLimitsY(-10, 1000);
+    ImPlot::SetNextPlotLimitsY(-10, 260);
 
     if(ImPlot::BeginPlot("Motor Outputs", "Time (s)", "Duty Cycle", ImVec2(500, 350), 0, rt_axis, rt_axis)){
         ImPlot::PlotLine("Front Left", &m0.Data[0].x, &m0.Data[0].y, m0.Data.size(), m0.Offset, 2 * sizeof(float));
@@ -176,6 +176,15 @@ void MainApp::showDroneControl() {
     ImGui::Begin("Drone Control", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::RadioButton(interface.isConnected() ? "Connected" : "Disconnected", interface.isConnected());
     ImGui::PlotVar("Drone heartbeat", interface.getHeartbeatTime(), 0, 100);
+
+    static bool lastIsPressed = false;
+    const bool isPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::F);
+    if(isPressed and isPressed != lastIsPressed){
+        interface.emergencyStop(!interface.isEmergencyStopped());
+    }
+
+    lastIsPressed = isPressed;
+
     if(interface.isEmergencyStopped()){
         ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Emergency stopped!");
     } else {

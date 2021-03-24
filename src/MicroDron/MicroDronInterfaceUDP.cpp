@@ -228,7 +228,7 @@ void MicroDronInterfaceUDP::update() {
                     mavlink_msg_param_value_decode(&msg, &param);
 
                     paramList[param.param_index] = param;
-                    std::cout << fmt::format("Got param: {} i: {}", param.param_id, param.param_index) << std::endl;
+                    //std::cout << fmt::format("Got param: {} i: {}", param.param_id, param.param_index) << std::endl;
                     break;
                 case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
                     mavlink_named_value_float_t valueFloat;
@@ -277,7 +277,7 @@ void MicroDronInterfaceUDP::sendAndCheckParams() {
 
     while(isRunning) {
         if (pendingParams.empty()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
         } else{
             std::unique_lock nextGuard(nextToAccessMutex);
             std::lock_guard guard(updateMutex);
@@ -310,7 +310,7 @@ void MicroDronInterfaceUDP::sendAndCheckParams() {
 
             //requestParamList();
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
     }
 }

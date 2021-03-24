@@ -18,7 +18,7 @@ struct ScrollingBuffer {
     size_t MaxSize;
     int Offset;
     std::vector<ImVec2> Data;
-    ScrollingBuffer(size_t max_size = 5000) {
+    ScrollingBuffer(size_t max_size = 2500) {
         MaxSize = max_size;
         Offset  = 0;
         Data.reserve(MaxSize);
@@ -52,8 +52,6 @@ private:
     MicroDronInterfaceUDP interface;
 
     lua_State *luaState;
-
-    std::map<int, bool> paramsToSend;
 
     bool refreshParams = true;
 
