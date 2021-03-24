@@ -276,9 +276,7 @@ void MicroDronInterfaceUDP::sendAndCheckParams() {
     mavlink_message_t msg;
 
     while(isRunning) {
-        if (pendingParams.empty()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(250));
-        } else{
+        if (!pendingParams.empty()) {
             std::unique_lock nextGuard(nextToAccessMutex);
             std::lock_guard guard(updateMutex);
 
@@ -307,9 +305,8 @@ void MicroDronInterfaceUDP::sendAndCheckParams() {
                     ++it;
                 }
             }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 

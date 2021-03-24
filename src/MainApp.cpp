@@ -115,7 +115,7 @@ void MainApp::drawParamWindow() {
                 ImGui::TableNextColumn();
 
                 //Needs to have a label for some reason, otherwise, checkbox does not work
-                ImGui::InputFloat(" ", &(paramsCache[param.first].param_value), 0.1f, 0.0f, "%.5f");
+                ImGui::InputFloat(" ", &(paramsCache[param.first].param_value), 0.1f, 0.0f, "%.2f");
                 ImGui::PopID();
             }
             ImGui::EndTable();
