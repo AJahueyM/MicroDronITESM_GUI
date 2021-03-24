@@ -107,8 +107,17 @@ void MicroDronInterfaceUDP::setAllMotorOutput(float output1, float output2, floa
 
 }
 
-void MicroDronInterfaceUDP::setSetpoints(float roll, float pitch, float yaw, float height) {
-    std::cout << fmt::format("{}, {}, {}, {}", roll, pitch, yaw, height) << std::endl;
+void MicroDronInterfaceUDP::setSetpoints(float roll, float pitch, float yaw, float thrust, bool applyFeedForward) {
+    std::cout << fmt::format("Roll: {}, Pitch: {}, Yaw: {}, Thrust: {}", roll, pitch, yaw, thrust) << std::endl;
+
+    uint8_t mode = applyFeedForward ? 1 : 0;
+    mavlink_message_t msg;
+    mavlink_msg_manual_setpoint_pack(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, (uint32_t) timeSinceStart * 1000,
+                                    roll, pitch,
+                                    yaw, thrust, mode, 0);
+
+    comms->sendMessage(msg);
+
 }
 
 void MicroDronInterfaceUDP::setK(float newK) {
@@ -257,6 +266,7 @@ void MicroDronInterfaceUDP::update() {
             }
         }
 
+        timeSinceStart = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - systemStart).count();
         //std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }

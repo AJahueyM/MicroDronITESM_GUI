@@ -76,7 +76,7 @@ public:
 
     void setAllMotorOutput(float output1, float output2, float output3, float output4) override;
 
-    void setSetpoints(float roll, float pitch, float yaw, float height) override;
+    void setSetpoints(float roll, float pitch, float yaw, float thrust, bool applyFeedForward = false) override;
 
     void sendJoystickControl(int16_t x, int16_t y, int16_t z, int16_t r) override;
 
@@ -131,7 +131,8 @@ private:
     std::chrono::high_resolution_clock::time_point lastMotorUpdateTime = std::chrono::high_resolution_clock::now();
 
     std::chrono::high_resolution_clock::time_point lastAttUpdateTime = std::chrono::high_resolution_clock::now();
-
+    std::chrono::high_resolution_clock::time_point systemStart = std::chrono::high_resolution_clock::now();
+    double timeSinceStart = 0.0; //Seconds
     ESPComms *comms;
 };
 

@@ -20,6 +20,14 @@ MainApp::MainApp() {
 
     LuaMicroDronInterface::setMicroDronInterface(std::shared_ptr<MicroDronInterface>(&interface));
     LuaMicroDronInterface::registerFunctions(luaState);
+
+    pitch = 0;
+    roll = 0;
+    yaw = 0;
+    thrust = 0;
+    feedForward = 0;
+    feedForwardEnabled = true;
+    closedLoopEnabled = false;
 }
 
 void MainApp::update() {
@@ -176,7 +184,11 @@ void MainApp::drawIMUPlots() {
 
 void MainApp::showDroneControl() {
     ImGui::Begin("Drone Control", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Columns(2);
     ImGui::RadioButton(interface.isConnected() ? "Connected" : "Disconnected", interface.isConnected());
+    ImGui::NextColumn();
+    ImGui::RadioButton(closedLoopEnabled ? "Armed" : "Disabled", closedLoopEnabled);
+    ImGui::Columns(1);
     ImGui::PlotVar("Drone heartbeat", interface.getHeartbeatTime(), 0, 100);
 
     static bool lastIsPressed = false;
@@ -192,7 +204,37 @@ void MainApp::showDroneControl() {
     } else {
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Running");
     }
+    ImGui::Separator();
+    ImGui::Text("Setpoints");
+
+
+    if(ImGui::Button(((closedLoopEnabled ? "Disable Closed Loop Control" : "Enable Closed Loop Control")))){
+        closedLoopEnabled = !closedLoopEnabled;
+    }
+
+    ImGui::InputFloat("Roll", &roll);
+    ImGui::InputFloat("Pitch", &pitch);
+    ImGui::InputFloat("Yaw", &yaw);
+    ImGui::InputFloat("Thrust", &thrust);
+    ImGui::Columns(2, "Feedforward Columns");
+    ImGui::InputFloat("Feedforward", &feedForward);
+    ImGui::NextColumn();
+    ImGui::Checkbox("FF Enabled", &feedForwardEnabled);
+    ImGui::NextColumn();
+    ImGui::SliderFloat("FF Slider", &feedForward, 0, 500.0, "%.3F", ImGuiSliderFlags_ClampOnInput);
+    ImGui::Columns(1);
+
+    if(ImGui::Button("Send") && feedForwardEnabled){
+        interface.setSetpoints(roll, pitch, yaw, thrust, feedForwardEnabled);
+        mavlink_param_set_t paramSet;
+        paramSet.param_value = feedForward;
+        snprintf(paramSet.param_id, sizeof(paramSet.param_id), "%s", "Feedforward");
+        paramSet.param_type = MAVLINK_TYPE_FLOAT;
+
+        interface.setParameter(paramSet);
+    }
     ImGui::End();
+
 }
 
 void MainApp::showScriptsWindow() {

@@ -50,6 +50,9 @@ public:
     void update();
 private:
     MicroDronInterfaceUDP interface;
+    float pitch, roll, yaw, thrust, feedForward;
+    bool feedForwardEnabled;
+    bool closedLoopEnabled;
 
     lua_State *luaState;
 
@@ -57,6 +60,7 @@ private:
 
     SFMLControllerConfig tarranisConfig;
     std::unique_ptr<SFMLController> controller;
+
 
     bool lastScriptButton = false;
 
