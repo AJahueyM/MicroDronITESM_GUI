@@ -66,6 +66,8 @@ void MainApp::drawParamWindow() {
     ImGui::Begin("Parameters", nullptr, 0);
     if(ImGui::Button("Request Parameters")){
         interface.requestParamList();
+        refreshParams = true;
+        refreshParamsTime = std::chrono::high_resolution_clock::now();
     }
 
     if(ImGui::TreeNode("Parameters")){
