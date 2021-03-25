@@ -107,14 +107,13 @@ void MicroDronInterfaceUDP::setAllMotorOutput(float output1, float output2, floa
 
 }
 
-void MicroDronInterfaceUDP::setSetpoints(float roll, float pitch, float yaw, float thrust, bool applyFeedForward) {
-    std::cout << fmt::format("Roll: {}, Pitch: {}, Yaw: {}, Thrust: {}", roll, pitch, yaw, thrust) << std::endl;
+void MicroDronInterfaceUDP::setManualSetpoint(float roll, float pitch, float yaw, float thrust, bool applyFeedForward) {
+    //std::cout << fmt::format("Roll: {}, Pitch: {}, Yaw: {}, Thrust: {} FF: {}", roll, pitch, yaw, thrust, applyFeedForward) << std::endl;
 
-    uint8_t mode = applyFeedForward ? 1 : 0;
     mavlink_message_t msg;
     mavlink_msg_manual_setpoint_pack(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, (uint32_t) timeSinceStart * 1000,
                                     roll, pitch,
-                                    yaw, thrust, mode, 0);
+                                    yaw, thrust, applyFeedForward, 0);
 
     comms->sendMessage(msg);
 
@@ -167,6 +166,15 @@ void MicroDronInterfaceUDP::requestParamList() {
     mavlink_message_t msg;
     mavlink_msg_param_request_list_pack(201, 2, &msg, 0, 0);
     sendMessage(msg);
+}
+
+void MicroDronInterfaceUDP::setParameter(const std::string &name, float value) {
+    mavlink_param_set_t paramSet;
+    paramSet.param_value = value;
+    snprintf(paramSet.param_id, sizeof(paramSet.param_id), "%s", name.c_str());
+    paramSet.param_type = MAVLINK_TYPE_FLOAT;
+
+    setParameter(paramSet);
 }
 
 void MicroDronInterfaceUDP::setParameter(const mavlink_param_set_t &paramSet) {

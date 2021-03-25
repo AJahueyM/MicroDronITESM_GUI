@@ -183,7 +183,7 @@ void MainApp::drawIMUPlots() {
 }
 
 void MainApp::showDroneControl() {
-    ImGui::Begin("Drone Control", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Begin("Drone Control", nullptr, ImGuiWindowFlags_None);
     ImGui::Columns(2);
     ImGui::RadioButton(interface.isConnected() ? "Connected" : "Disconnected", interface.isConnected());
     ImGui::NextColumn();
@@ -212,10 +212,17 @@ void MainApp::showDroneControl() {
         closedLoopEnabled = !closedLoopEnabled;
     }
 
-    ImGui::InputFloat("Roll", &roll);
-    ImGui::InputFloat("Pitch", &pitch);
-    ImGui::InputFloat("Yaw", &yaw);
-    ImGui::InputFloat("Thrust", &thrust);
+    const float maxSetpoint = M_PI;
+    ImGui::SliderFloat("Roll", &roll, -maxSetpoint, maxSetpoint, "%.3F", ImGuiSliderFlags_ClampOnInput);
+    ImGui::SliderFloat("Pitch", &pitch, -maxSetpoint, maxSetpoint, "%.3F", ImGuiSliderFlags_ClampOnInput);
+    ImGui::SliderFloat("Yaw", &yaw, -maxSetpoint, maxSetpoint, "%.3F", ImGuiSliderFlags_ClampOnInput);
+    ImGui::SliderFloat("Thrust", &thrust, 0, 25, "%.3F", ImGuiSliderFlags_ClampOnInput);
+    if(ImGui::Button("Zero All")){
+        roll = 0;
+        pitch = 0;
+        yaw = 0;
+        thrust = 0;
+    }
     ImGui::Columns(2, "Feedforward Columns");
     ImGui::InputFloat("Feedforward", &feedForward);
     ImGui::NextColumn();
@@ -224,14 +231,10 @@ void MainApp::showDroneControl() {
     ImGui::SliderFloat("FF Slider", &feedForward, 0, 500.0, "%.3F", ImGuiSliderFlags_ClampOnInput);
     ImGui::Columns(1);
 
-    if(ImGui::Button("Send") && feedForwardEnabled){
-        interface.setSetpoints(roll, pitch, yaw, thrust, feedForwardEnabled);
-        mavlink_param_set_t paramSet;
-        paramSet.param_value = feedForward;
-        snprintf(paramSet.param_id, sizeof(paramSet.param_id), "%s", "Feedforward");
-        paramSet.param_type = MAVLINK_TYPE_FLOAT;
+    interface.setManualSetpoint(roll, pitch, yaw, thrust, feedForwardEnabled);
 
-        interface.setParameter(paramSet);
+    if(ImGui::Button("Send") && feedForwardEnabled){
+        interface.setParameter("ff_val", feedForward);
     }
     ImGui::End();
 

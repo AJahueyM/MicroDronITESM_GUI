@@ -157,7 +157,7 @@ public:
      * @param yaw
      * @param height
      */
-    virtual void setSetpoints(float pitch, float roll, float yaw, float height, bool applyFeedForward) = 0;
+    virtual void setManualSetpoint(float pitch, float roll, float yaw, float height, bool applyFeedForward) = 0;
 
     /**
      * Attempts to update K value, this represents the biggest motor output the drone will attempt to use

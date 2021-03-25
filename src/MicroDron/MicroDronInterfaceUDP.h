@@ -76,7 +76,7 @@ public:
 
     void setAllMotorOutput(float output1, float output2, float output3, float output4) override;
 
-    void setSetpoints(float roll, float pitch, float yaw, float thrust, bool applyFeedForward = false) override;
+    void setManualSetpoint(float roll, float pitch, float yaw, float thrust, bool applyFeedForward = false) override;
 
     void sendJoystickControl(int16_t x, int16_t y, int16_t z, int16_t r) override;
 
@@ -97,6 +97,8 @@ public:
     void requestParamList();
 
     std::map<int, mavlink_param_value_t>& getParams();
+
+    void setParameter(const std::string &name, float value);
 
     void setParameter(const mavlink_param_set_t &paramSet);
 
