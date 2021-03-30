@@ -19,7 +19,7 @@ MicroDronInterfaceUDP::MicroDronInterfaceUDP() {
     initialAttitude.roll = 0;
     attitude.store(initialAttitude);
 
-    std::string addr("192.168.1.46");
+    std::string addr("192.168.15.23");
     comms = new ESPComms(addr, 14550, 14551, 14552);
 
 //    ret = fcntl(sock, F_SETFL, O_NONBLOCK | FASYNC);
@@ -108,14 +108,13 @@ void MicroDronInterfaceUDP::setAllMotorOutput(float output1, float output2, floa
 }
 
 void MicroDronInterfaceUDP::setSetpoints(float roll, float pitch, float yaw, float thrust, bool applyFeedForward) {
-    std::cout << fmt::format("Roll: {}, Pitch: {}, Yaw: {}, Thrust: {}", roll, pitch, yaw, thrust) << std::endl;
+    std::cout << fmt::format("Roll: {}, Pitch: {}, Yaw: {}, Thrust: {} FF Applied: {}", roll, pitch, yaw, thrust, applyFeedForward) << std::endl;
 
     uint8_t mode = applyFeedForward ? 1 : 0;
     mavlink_message_t msg;
     mavlink_msg_manual_setpoint_pack(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, (uint32_t) timeSinceStart * 1000,
                                     roll, pitch,
                                     yaw, thrust, mode, 0);
-
     comms->sendMessage(msg);
 
 }

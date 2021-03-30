@@ -154,7 +154,7 @@ void MainApp::drawIMUPlots() {
     ImPlot::SetNextPlotLimitsX(tDelta - history,tDelta, ImGuiCond_Always);
     ImPlot::SetNextPlotLimitsY(-180, 180);
     if(ImPlot::BeginPlot("IMU (Degrees)", "Time (s)", "Degrees", ImVec2(500, 350), 0, rt_axis, rt_axis)){
-        ImPlot::PlotLine("Roll", &rollBuf.Data[0].x, &rollBuf.Data[0].y, rollBuf.Data.size(), 0, 2 * sizeof(float));
+        ImPlot::PlotLine("Roll", &rollBuf.Data[0].x, &rollBuf.Data[0].y, rollBuf.Data.size(), rollBuf.Offset, 2 * sizeof(float));
         ImPlot::PlotLine("Pitch", &pitchBuf.Data[0].x, &pitchBuf.Data[0].y, pitchBuf.Data.size(), pitchBuf.Offset, 2 * sizeof(float));
         ImPlot::PlotLine("Yaw", &yawBuf.Data[0].x, &yawBuf.Data[0].y, yawBuf.Data.size(), yawBuf.Offset, 2 * sizeof(float));
         ImPlot::EndPlot();
@@ -224,7 +224,7 @@ void MainApp::showDroneControl() {
     ImGui::SliderFloat("FF Slider", &feedForward, 0, 500.0, "%.3F", ImGuiSliderFlags_ClampOnInput);
     ImGui::Columns(1);
 
-    if(ImGui::Button("Send") && feedForwardEnabled){
+    if(ImGui::Button("Send") && closedLoopEnabled){
         interface.setSetpoints(roll, pitch, yaw, thrust, feedForwardEnabled);
         mavlink_param_set_t paramSet;
         paramSet.param_value = feedForward;
@@ -233,6 +233,7 @@ void MainApp::showDroneControl() {
 
         interface.setParameter(paramSet);
     }
+
     ImGui::End();
 
 }
