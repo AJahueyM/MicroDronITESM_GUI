@@ -224,7 +224,7 @@ void MainApp::showDroneControl() {
     ImGui::SliderFloat("FF Slider", &feedForward, 0, 500.0, "%.3F", ImGuiSliderFlags_ClampOnInput);
     ImGui::Columns(1);
 
-    if(ImGui::Button("Send") && closedLoopEnabled){
+    if(ImGui::Button("Send") && feedForwardEnabled){
         interface.setSetpoints(roll, pitch, yaw, thrust, feedForwardEnabled);
         mavlink_param_set_t paramSet;
         paramSet.param_value = feedForward;
@@ -233,7 +233,6 @@ void MainApp::showDroneControl() {
 
         interface.setParameter(paramSet);
     }
-
     ImGui::End();
 
 }
