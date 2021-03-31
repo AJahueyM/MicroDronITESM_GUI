@@ -225,7 +225,7 @@ void MainApp::showDroneControl() {
     ImGui::Columns(1);
 
     if(ImGui::Button("Send") && feedForwardEnabled){
-        interface.setSetpoints(roll, pitch, yaw, thrust, feedForwardEnabled);
+        interface.setManualSetpoint(roll, pitch, yaw, thrust, feedForwardEnabled);
         mavlink_param_set_t paramSet;
         paramSet.param_value = feedForward;
         snprintf(paramSet.param_id, sizeof(paramSet.param_id), "%s", "Feedforward");

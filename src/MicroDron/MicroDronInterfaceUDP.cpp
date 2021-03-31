@@ -107,7 +107,7 @@ void MicroDronInterfaceUDP::setAllMotorOutput(float output1, float output2, floa
 
 }
 
-void MicroDronInterfaceUDP::setSetpoints(float roll, float pitch, float yaw, float thrust, bool applyFeedForward) {
+void MicroDronInterfaceUDP::setManualSetpoint(float roll, float pitch, float yaw, float thrust, bool applyFeedForward) {
     std::cout << fmt::format("Roll: {}, Pitch: {}, Yaw: {}, Thrust: {}", roll, pitch, yaw, thrust) << std::endl;
 
     uint8_t mode = applyFeedForward ? 1 : 0;
